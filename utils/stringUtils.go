@@ -3,6 +3,7 @@ package utils
 import (
 	"crypto/md5"
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -33,4 +34,9 @@ func Truncate(s string, maxLen int) string {
 		return s
 	}
 	return s[:maxLen]
+}
+
+// 字符串转int64
+func StrToInt64(s string) (int64, error) {
+	return strconv.ParseInt(s, 10, 64)
 }

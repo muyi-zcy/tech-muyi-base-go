@@ -13,8 +13,9 @@
 - **健康检查**: 内置健康检查接口
 - **统一响应**: 标准化的 API 响应格式
 - **异常处理**: 全局异常处理中间件，支持自定义业务异常注册
-- **ID 生成**: 分布式 ID 生成器
+- **ID 生成**: 分布式 ID 生成器（Snowflake算法）
 - **上下文管理**: 自动管理请求上下文，支持 traceId 和 ssoId
+- **分页查询**: 内置分页查询支持
 
 ## 📋 系统要求
 
@@ -77,19 +78,13 @@ tech-muyi-base-go/
 │   └── app-prod.conf      # 生产环境配置
 ├── config/                 # 配置管理
 │   └── config.go          # 配置结构和初始化
-├── controller/             # 控制器层
-│   └── user.go            # 用户控制器示例
 ├── core/                   # 核心应用逻辑
 │   ├── app.go             # 应用实例管理
 │   ├── health.go          # 健康检查
 │   └── starter.go         # 应用启动器
-├── dao/                    # 数据访问层
-│   └── user.go            # 用户数据访问对象
 ├── exception/              # 异常处理
 │   ├── common_error_code.go # 通用错误码
 │   └── exception.go       # 异常处理逻辑
-├── id/                     # ID 生成器
-│   └── myId.go            # 分布式 ID 生成
 ├── infrastructure/         # 基础设施
 │   ├── database.go        # 数据库连接管理（已集成GORM）
 │   └── redis.go           # Redis 连接管理
@@ -100,18 +95,22 @@ tech-muyi-base-go/
 │   ├── exception.go       # 异常处理中间件
 │   └── logger.go          # 日志中间件
 ├── model/                  # 数据模型
-│   └── user.go            # 用户模型示例
+│   ├── baseDo.go          # 基础数据模型
 ├── myContext/              # 上下文管理
 │   └── context.go         # 自定义上下文
+├── myId/                   # ID 生成器
+│   └── myId.go            # 分布式 ID 生成
 ├── myResult/               # 响应结果
 │   └── response.go        # 统一响应格式
-├── service/                # 服务层
-│   └── user.go            # 用户服务示例
+├── repository/             # 数据访问层
+│   ├── baseRepository.go  # 基础数据访问
 ├── utils/                  # 工具函数
 │   ├── stringUtils.go     # 字符串工具
 │   └── timeUtils.go       # 时间工具
 ├── main.go                 # 主程序入口
 ├── go.mod                  # Go 模块文件
+├── Dockerfile              # Docker 镜像构建文件
+├── start.sh                # 启动脚本
 └── README.md               # 项目说明文档
 ```
 
@@ -140,6 +139,7 @@ maxage = 30
 maxbackups = 10
 compress = true
 stdout = true
+log_sql = false
 
 # 数据库配置
 [database]
@@ -171,9 +171,9 @@ db = 0
 - **响应**: 欢迎信息
 
 #### 2. 健康检查
-- **GET** `/api/v1/system/health`
+- **GET** `/ok`
 - **描述**: 服务健康状态检查
-- **响应**: 健康状态信息
+- **响应**: ok
 
 #### 3. 系统信息
 - **GET** `/api/v1/system/info`
@@ -184,25 +184,6 @@ db = 0
 - **GET** `/api/v1/system/config`
 - **描述**: 获取安全配置信息
 - **响应**: 应用配置（不包含敏感信息）
-
-### 用户管理接口（GORM示例）
-
-#### 1. 获取用户列表
-- **GET** `/api/v1/users`
-- **描述**: 获取所有用户列表（使用GORM查询）
-- **响应**: 用户列表
-
-#### 2. 获取单个用户
-- **GET** `/api/v1/users/:id`
-- **描述**: 根据ID获取用户信息（使用GORM查询）
-- **参数**: `id` - 用户ID
-- **响应**: 用户详细信息
-
-#### 3. 创建用户
-- **POST** `/api/v1/users`
-- **描述**: 创建新用户（使用GORM插入）
-- **请求体**: 用户信息JSON
-- **响应**: 创建成功的用户信息
 
 ### 测试接口
 
@@ -291,25 +272,18 @@ go test -cover ./...
 - 全局异常处理
 - 请求参数验证
 - 日志安全记录
+- SQL注入防护（通过GORM）
 
 ## 🚀 部署
 
 ### Docker 部署
 
-```dockerfile
-FROM golang:1.22-alpine AS builder
-WORKDIR /app
-COPY . .
-RUN go mod download
-RUN go build -o main .
+```bash
+# 构建镜像
+docker build -t tech-muyi-base-go .
 
-FROM alpine:latest
-RUN apk --no-cache add ca-certificates
-WORKDIR /root/
-COPY --from=builder /app/main .
-COPY --from=builder /app/app/ ./app/
-EXPOSE 8080
-CMD ["./main"]
+# 运行容器
+docker run -p 8080:8080 tech-muyi-base-go
 ```
 
 ### 构建二进制文件
@@ -442,6 +416,36 @@ func HandleCustomError(ctx *gin.Context) {
 // 中间件会根据异常类型返回对应的HTTP状态码和错误信息
 ```
 
+### 4. 分布式ID生成器
+
+项目集成了基于Snowflake算法的分布式ID生成器：
+
+```go
+// 生成唯一ID
+id, err := myId.NextId()
+if err != nil {
+    // 处理错误
+    return
+}
+// 使用生成的ID
+user.Id = id
+```
+
+### 5. 统一响应格式
+
+所有API接口都使用统一的响应格式，便于前端处理：
+
+```go
+// 成功响应
+myResult.Success(ctx, data)
+
+// 带分页的成功响应
+myResult.SuccessWithQuery(ctx, data, query)
+
+// 错误响应
+myResult.ErrorWithError(ctx, err)
+```
+
 ## 📦 核心组件使用说明
 
 ### 上下文管理组件
@@ -486,6 +490,22 @@ func HandleCustomError(ctx *gin.Context) {
 5. **BadRequestResponse**: 400错误响应
 6. **UnauthorizedResponse**: 401错误响应
 7. **NotFoundResponse**: 404错误响应
+
+### 数据访问层组件
+
+数据访问层组件位于 `repository` 包中，提供了基础的数据访问功能：
+
+1. **BaseRepository**: 基础仓库接口，提供增删改查等通用方法
+2. **BaseRepositoryImpl**: 基础仓库实现
+3. **UserRepository**: 用户仓库接口
+4. **UserRepositoryImpl**: 用户仓库实现
+
+### 服务层组件
+
+服务层组件位于 `service` 包中，提供了业务逻辑处理功能：
+
+1. **UserService**: 用户服务接口
+2. **UserServiceImpl**: 用户服务实现
 
 ## 🤝 贡献
 

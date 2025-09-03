@@ -40,6 +40,7 @@ type LogConfig struct {
 	MaxBackups int    `mapstructure:"maxbackups"`
 	Compress   bool   `mapstructure:"compress"`
 	Stdout     bool   `mapstructure:"stdout"`
+	LogSQL     bool   `mapstructure:"log_sql"` // 新增：是否记录SQL日志
 }
 
 // DatabaseConfig 数据库配置
@@ -173,7 +174,8 @@ func setDefaultConfig() {
 	viper.SetDefault("log.maxage", 30)
 	viper.SetDefault("log.maxbackups", 3)
 	viper.SetDefault("log.compress", true)
-	viper.SetDefault("log.stdout", false) // 默认不启用控制台输出
+	viper.SetDefault("log.stdout", false)  // 默认不启用控制台输出
+	viper.SetDefault("log.log_sql", false) // 默认不记录SQL日志
 	viper.SetDefault("log.enable_trace_id", false)
 	viper.SetDefault("log.trace_id_key", "X-Trace-Id")
 	viper.SetDefault("database.driver", "mysql")

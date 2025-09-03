@@ -55,7 +55,7 @@ type NotFoundError struct {
 }
 
 func (e *NotFoundError) Error() string {
-	return fmt.Sprintf("NotFoundError: resource=%s, id=%v", e.Resource, e.ID)
+	return fmt.Sprintf("NotFoundError: resource=%s, myId=%v", e.Resource, e.ID)
 }
 
 // NewNotFoundError 创建资源不存在异常

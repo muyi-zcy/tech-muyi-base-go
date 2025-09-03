@@ -1,4 +1,4 @@
-package id
+package myId
 
 import (
 	"errors"
@@ -76,7 +76,7 @@ func NextId() (int64, error) {
 
 	now := time.Now().UnixNano() / 1000000 // 获取当前时间戳，转毫秒
 	if now < snowFlake.lastTimestamp {     // 如果当前时间小于上一次 ID 生成的时间戳，说明发生时钟回拨
-		return 0, errors.New(fmt.Sprintf("Clock moved backwards. Refusing to generate id for %d milliseconds", snowFlake.lastTimestamp-now))
+		return 0, errors.New(fmt.Sprintf("Clock moved backwards. Refusing to generate myId for %d milliseconds", snowFlake.lastTimestamp-now))
 	}
 
 	t := now - snowFlake.epoch

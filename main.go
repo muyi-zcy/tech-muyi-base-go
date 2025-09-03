@@ -9,6 +9,7 @@ import (
 )
 
 func main() {
+
 	// 从配置创建并初始化启动器（自动创建并初始化应用实例）
 	starter, err := core.Initialize()
 	if err != nil {

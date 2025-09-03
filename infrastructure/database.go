@@ -11,17 +11,19 @@ import (
 	"go.uber.org/zap"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	gormLogger "gorm.io/gorm/logger"
 )
 
 // DB GORM数据库连接实例
 var DB *gorm.DB
 
-// sqlDB 原生数据库连接实例（用于连接池管理）
+// sqlDB 原根数据库连接实例（用于连接池管理）
 var sqlDB *sql.DB
 
 // InitDatabase 初始化GORM数据库连接
 func InitDatabase() error {
 	dbConfig := config.GetDatabaseConfig()
+	logConfig := config.GetLogConfig()
 
 	// 检查配置是否正确加载
 	if dbConfig.Host == "" {
@@ -38,10 +40,20 @@ func InitDatabase() error {
 		return fmt.Errorf("不支持的数据库驱动: %s", dbConfig.Driver)
 	}
 
+	// 配置GORM日志
+	var gormConfig *gorm.Config
+	if logConfig.LogSQL {
+		gormConfig = &gorm.Config{
+			Logger: &gormLoggerImpl{},
+		}
+	} else {
+		gormConfig = &gorm.Config{}
+	}
+
 	logger.Info("数据库连接字符串", zap.String("driver", dbConfig.Driver))
 
 	var err error
-	DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	DB, err = gorm.Open(mysql.Open(dsn), gormConfig)
 	if err != nil {
 		return fmt.Errorf("打开数据库连接失败: %v", err)
 	}
@@ -81,14 +93,56 @@ func InitDatabase() error {
 	return nil
 }
 
+// gormLoggerImpl GORM日志记录器实现
+type gormLoggerImpl struct {
+	gormLogger.Interface
+}
+
+// LogMode 设置日志模式
+func (l *gormLoggerImpl) LogMode(level gormLogger.LogLevel) gormLogger.Interface {
+	return gormLogger.Default.LogMode(level)
+}
+
+// Info 记录信息日志
+func (l *gormLoggerImpl) Info(ctx context.Context, msg string, data ...interface{}) {
+	logger.InfoCtx(ctx, fmt.Sprintf(msg, data...))
+}
+
+// Warn 记录警告日志
+func (l *gormLoggerImpl) Warn(ctx context.Context, msg string, data ...interface{}) {
+	logger.WarnCtx(ctx, fmt.Sprintf(msg, data...))
+}
+
+// Error 记录错误日志
+func (l *gormLoggerImpl) Error(ctx context.Context, msg string, data ...interface{}) {
+	logger.ErrorCtx(ctx, fmt.Sprintf(msg, data...))
+}
+
+// Trace 记录SQL执行轨迹
+func (l *gormLoggerImpl) Trace(ctx context.Context, begin time.Time, fc func() (sql string, rowsAffected int64), err error) {
+	// 使用我们的日志系统记录SQL执行信息
+	sql, rows := fc()
+	elapsed := time.Since(begin)
+
+	fields := []zap.Field{
+		zap.String("sql", sql),
+		zap.Int64("rows", rows),
+		zap.Duration("elapsed", elapsed),
+	}
+
+	if err != nil {
+		fields = append(fields, zap.Error(err))
+		logger.ErrorCtx(ctx, "SQL执行", fields...)
+	} else if elapsed > 200*time.Millisecond {
+		logger.WarnCtx(ctx, "慢SQL", fields...)
+	} else {
+		logger.DebugCtx(ctx, "SQL执行", fields...)
+	}
+}
+
 // GetDB 获取GORM数据库连接实例
 func GetDB() *gorm.DB {
 	return DB
-}
-
-// GetSqlDB 获取原生数据库连接实例
-func GetSqlDB() *sql.DB {
-	return sqlDB
 }
 
 // CloseDB 关闭数据库连接

@@ -37,6 +37,10 @@ func (q *MyQuery) GetOffset() int {
 	return (q.GetCurrent() - 1) * q.GetSize()
 }
 
+func (q *MyQuery) SetTotal(total int64) {
+	q.Total = total
+}
+
 // MyResult 统一返回结果结构
 type MyResult struct {
 	Code    string      `json:"code"`

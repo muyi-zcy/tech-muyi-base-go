@@ -181,6 +181,7 @@ type LogConfig struct {
 	MaxBackups int    `mapstructure:"maxbackups"`
 	Compress   bool   `mapstructure:"compress"`
 	Stdout     bool   `mapstructure:"stdout"`
+	LogSQL     bool   `mapstructure:"log_sql"`     // 新增：是否记录SQL日志
 	TimeFormat string `mapstructure:"time_format"` // 可选：时间格式配置
 }
 
