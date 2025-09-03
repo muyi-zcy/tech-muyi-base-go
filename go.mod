@@ -1,4 +1,4 @@
-module tech-muyi-base-go
+module github.com/muyi-zcy/tech-muyi-base-go
 
 go 1.22.2
 
