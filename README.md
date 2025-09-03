@@ -1,4 +1,4 @@
-# Tech MuYi Go 基础包
+# tech-muyi-base-go
 
 一个基于 Go 语言的企业级 Web 服务基础框架，集成了 Gin、MySQL、Redis、Zap 日志等常用组件，提供开箱即用的基础设施和最佳实践。
 
