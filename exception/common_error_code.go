@@ -1,5 +1,9 @@
 package exception
 
+import (
+	"sync"
+)
+
 // CommonErrorCodeEnum 通用错误码枚举
 type CommonErrorCodeEnum int
 
@@ -95,11 +99,14 @@ const (
 	QUERY_PARAM_ERROR
 )
 
-// 错误码和错误信息映射
-var errorCodeMap = map[CommonErrorCodeEnum]struct {
+// ErrorCode 定义错误码结构
+type ErrorCode struct {
 	Code string
 	Msg  string
-}{
+}
+
+// 错误码和错误信息映射
+var errorCodeMap = map[CommonErrorCodeEnum]ErrorCode{
 	// 1XX 信息，服务器收到请求，需要请求者继续执行操作
 	CONTINUE:            {"100", "Continue"},
 	SWITCHING_PROTOCOLS: {"101", "Switching Protocols"},
@@ -191,19 +198,45 @@ var errorCodeMap = map[CommonErrorCodeEnum]struct {
 	QUERY_PARAM_ERROR:    {"10006", "The query parameters do not meet requirements"},
 }
 
+// 用于线程安全地注册新的错误码
+var (
+	mu             sync.RWMutex
+	customErrorMap = make(map[CommonErrorCodeEnum]ErrorCode)
+)
+
 // GetResultCode 获取错误码
 func (e CommonErrorCodeEnum) GetResultCode() string {
+	mu.RLock()
+	defer mu.RUnlock()
+
+	// 先检查自定义错误码
+	if val, ok := customErrorMap[e]; ok {
+		return val.Code
+	}
+
+	// 再检查预定义错误码
 	if val, ok := errorCodeMap[e]; ok {
 		return val.Code
 	}
+
 	return "unknown"
 }
 
 // GetResultMsg 获取错误信息
 func (e CommonErrorCodeEnum) GetResultMsg() string {
+	mu.RLock()
+	defer mu.RUnlock()
+
+	// 先检查自定义错误码
+	if val, ok := customErrorMap[e]; ok {
+		return val.Msg
+	}
+
+	// 再检查预定义错误码
 	if val, ok := errorCodeMap[e]; ok {
 		return val.Msg
 	}
+
 	return "Unknown error"
 }
 
@@ -212,5 +245,64 @@ func (e CommonErrorCodeEnum) ToBusinessError() *BusinessError {
 	return &BusinessError{
 		Code:    e.GetResultCode(),
 		Message: e.GetResultMsg(),
+	}
+}
+
+// RegisterErrorCode 注册新的业务异常
+func RegisterErrorCode(codeEnum CommonErrorCodeEnum, code string, msg string) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	customErrorMap[codeEnum] = ErrorCode{
+		Code: code,
+		Msg:  msg,
+	}
+}
+
+// GetErrorCodeByCode 根据状态码直接创建BusinessError
+func GetErrorCodeByCode(code string, msg string) *BusinessError {
+	return &BusinessError{
+		Code:    code,
+		Message: msg,
+	}
+}
+
+// GetErrorCodeByHTTPStatus 根据HTTP状态码创建BusinessError
+func GetErrorCodeByHTTPStatus(status int, msg string) *BusinessError {
+	code := "500" // 默认值
+
+	// 根据HTTP状态码映射到对应的错误码
+	switch status {
+	case 400:
+		code = "400"
+	case 401:
+		code = "401"
+	case 403:
+		code = "403"
+	case 404:
+		code = "404"
+	case 405:
+		code = "405"
+	case 409:
+		code = "409"
+	case 422:
+		code = "422"
+	case 429:
+		code = "429"
+	case 500:
+		code = "500"
+	case 501:
+		code = "501"
+	case 502:
+		code = "502"
+	case 503:
+		code = "503"
+	case 504:
+		code = "504"
+	}
+
+	return &BusinessError{
+		Code:    code,
+		Message: msg,
 	}
 }

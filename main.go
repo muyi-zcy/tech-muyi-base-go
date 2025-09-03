@@ -4,9 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/muyi-zcy/tech-muyi-base-go/config"
 	"github.com/muyi-zcy/tech-muyi-base-go/core"
-	"github.com/muyi-zcy/tech-muyi-base-go/logger"
 	"github.com/muyi-zcy/tech-muyi-base-go/myResult"
-	"go.uber.org/zap"
 	"time"
 )
 
@@ -40,16 +38,6 @@ func registerRoutes(engine *gin.Engine) {
 	// API版本分组
 	api := engine.Group("/api/v1")
 	{
-		// 用户相关接口
-		users := api.Group("/users")
-		{
-			users.GET("", getUsers)
-			users.GET("/:id", getUserByID)
-			users.POST("", createUser)
-			users.PUT("/:id", updateUser)
-			users.DELETE("/:id", deleteUser)
-		}
-
 		// 系统相关接口
 		system := api.Group("/system")
 		{
@@ -66,79 +54,6 @@ func registerRoutes(engine *gin.Engine) {
 			test.GET("/error", testError)
 		}
 	}
-}
-
-// 用户相关接口
-func getUsers(c *gin.Context) {
-	// 模拟用户数据
-	users := []map[string]interface{}{
-		{"id": 1, "name": "张三", "email": "zhangsan@example.com", "age": 25},
-		{"id": 2, "name": "李四", "email": "lisi@example.com", "age": 30},
-		{"id": 3, "name": "王五", "email": "wangwu@example.com", "age": 28},
-	}
-
-	query := &myResult.MyQuery{
-		Size:    10,
-		Current: 1,
-		Total:   3,
-	}
-
-	logger.InfoCtx(c, "获取用户列表", zap.Any("query", query))
-
-	myResult.SuccessWithQuery(c, users, query)
-}
-
-func getUserByID(c *gin.Context) {
-	id := c.Param("id")
-
-	// 模拟根据ID查询用户
-	user := map[string]interface{}{
-		"id":    id,
-		"name":  "用户" + id,
-		"email": "user" + id + "@example.com",
-		"age":   25,
-	}
-
-	myResult.Success(c, user)
-}
-
-func createUser(c *gin.Context) {
-	var user map[string]interface{}
-	if err := c.ShouldBindJSON(&user); err != nil {
-		myResult.Fail("请求参数错误: " + err.Error())
-		return
-	}
-
-	// 模拟创建用户
-	user["id"] = 999
-	user["created_at"] = "2024-01-01T00:00:00Z"
-
-	logger.Info("创建用户", zap.Any("user", user))
-	myResult.Success(c, user)
-}
-
-func updateUser(c *gin.Context) {
-	id := c.Param("id")
-	var user map[string]interface{}
-	if err := c.ShouldBindJSON(&user); err != nil {
-		myResult.Fail("请求参数错误: " + err.Error())
-		return
-	}
-
-	// 模拟更新用户
-	user["id"] = id
-	user["updated_at"] = "2024-01-01T00:00:00Z"
-
-	logger.Info("更新用户", zap.String("id", id), zap.Any("user", user))
-	myResult.Success(c, user)
-}
-
-func deleteUser(c *gin.Context) {
-	id := c.Param("id")
-
-	// 模拟删除用户
-	logger.Info("删除用户", zap.String("id", id))
-	myResult.Success(c, map[string]string{"message": "用户删除成功", "id": id})
 }
 
 // 系统相关接口

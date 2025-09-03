@@ -4,18 +4,22 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/muyi-zcy/tech-muyi-base-go/config"
-	"github.com/muyi-zcy/tech-muyi-base-go/logger"
 	"time"
 
-	_ "github.com/go-sql-driver/mysql"
+	"github.com/muyi-zcy/tech-muyi-base-go/config"
+	"github.com/muyi-zcy/tech-muyi-base-go/logger"
 	"go.uber.org/zap"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 )
 
-// DB 数据库连接实例
-var DB *sql.DB
+// DB GORM数据库连接实例
+var DB *gorm.DB
 
-// InitDatabase 初始化数据库连接
+// sqlDB 原生数据库连接实例（用于连接池管理）
+var sqlDB *sql.DB
+
+// InitDatabase 初始化GORM数据库连接
 func InitDatabase() error {
 	dbConfig := config.GetDatabaseConfig()
 
@@ -25,20 +29,27 @@ func InitDatabase() error {
 	}
 
 	// 构建数据库连接字符串
-	var dataSourceName string
+	var dsn string
 	switch dbConfig.Driver {
 	case "mysql":
-		dataSourceName = fmt.Sprintf("%s:%s@tcp(%s:%d)/%s",
+		dsn = fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local",
 			dbConfig.Username, dbConfig.Password, dbConfig.Host, dbConfig.Port, dbConfig.Database)
 	default:
 		return fmt.Errorf("不支持的数据库驱动: %s", dbConfig.Driver)
 	}
 
-	logger.Info("数据库连接字符串", zap.String("dataSourceName", dataSourceName))
+	logger.Info("数据库连接字符串", zap.String("driver", dbConfig.Driver))
+
 	var err error
-	DB, err = sql.Open(dbConfig.Driver, dataSourceName)
+	DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return fmt.Errorf("打开数据库连接失败: %v", err)
+	}
+
+	// 获取通用数据库对象 sql.DB 以配置连接池
+	sqlDB, err = DB.DB()
+	if err != nil {
+		return fmt.Errorf("获取数据库对象失败: %v", err)
 	}
 
 	// 设置连接池参数 - 从配置中读取
@@ -54,30 +65,40 @@ func InitDatabase() error {
 
 	connMaxLifetime := dbConfig.ConnMaxLifetime
 
-	DB.SetMaxOpenConns(maxOpenConns)                                    // 最大打开连接数
-	DB.SetMaxIdleConns(maxIdleConns)                                    // 最大空闲连接数
-	DB.SetConnMaxLifetime(time.Duration(connMaxLifetime) * time.Second) // 连接最大生命周期
+	sqlDB.SetMaxOpenConns(maxOpenConns)                                    // 最大打开连接数
+	sqlDB.SetMaxIdleConns(maxIdleConns)                                    // 最大空闲连接数
+	sqlDB.SetConnMaxLifetime(time.Duration(connMaxLifetime) * time.Second) // 连接最大生命周期
 
 	// 测试连接
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	if err = DB.PingContext(ctx); err != nil {
+	if err = sqlDB.PingContext(ctx); err != nil {
 		return fmt.Errorf("数据库连接测试失败: %v", err)
 	}
 
+	logger.Info("GORM数据库连接初始化成功")
 	return nil
 }
 
-// GetDB 获取数据库连接实例
-func GetDB() *sql.DB {
+// GetDB 获取GORM数据库连接实例
+func GetDB() *gorm.DB {
 	return DB
+}
+
+// GetSqlDB 获取原生数据库连接实例
+func GetSqlDB() *sql.DB {
+	return sqlDB
 }
 
 // CloseDB 关闭数据库连接
 func CloseDB() error {
 	if DB != nil {
-		return DB.Close()
+		sqlDB, err := DB.DB()
+		if err != nil {
+			return err
+		}
+		return sqlDB.Close()
 	}
 	return nil
 }
