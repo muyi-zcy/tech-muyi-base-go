@@ -3,8 +3,8 @@ package infrastructure
 import (
 	"context"
 	"fmt"
-	"tech-muyi-base-go/config"
-	"tech-muyi-base-go/logger"
+	"github.com/muyi-zcy/tech-muyi-base-go/config"
+	"github.com/muyi-zcy/tech-muyi-base-go/logger"
 
 	"github.com/go-redis/redis/v8"
 	"go.uber.org/zap"

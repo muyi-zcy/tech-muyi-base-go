@@ -2,10 +2,10 @@ package core
 
 import (
 	"fmt"
+	"github.com/muyi-zcy/tech-muyi-base-go/config"
+	"github.com/muyi-zcy/tech-muyi-base-go/infrastructure"
+	"github.com/muyi-zcy/tech-muyi-base-go/logger"
 	"go.uber.org/zap"
-	"tech-muyi-base-go/config"
-	"tech-muyi-base-go/infrastructure"
-	"tech-muyi-base-go/logger"
 )
 
 // App 应用实例

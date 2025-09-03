@@ -2,11 +2,11 @@ package core
 
 import (
 	"fmt"
-	"tech-muyi-base-go/config"
-	"tech-muyi-base-go/infrastructure"
-	"tech-muyi-base-go/logger"
-	"tech-muyi-base-go/middleware"
-	"tech-muyi-base-go/myContext"
+	"github.com/muyi-zcy/tech-muyi-base-go/config"
+	"github.com/muyi-zcy/tech-muyi-base-go/infrastructure"
+	"github.com/muyi-zcy/tech-muyi-base-go/logger"
+	"github.com/muyi-zcy/tech-muyi-base-go/middleware"
+	"github.com/muyi-zcy/tech-muyi-base-go/myContext"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"

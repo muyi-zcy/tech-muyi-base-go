@@ -2,11 +2,11 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/muyi-zcy/tech-muyi-base-go/config"
+	"github.com/muyi-zcy/tech-muyi-base-go/core"
+	"github.com/muyi-zcy/tech-muyi-base-go/logger"
+	"github.com/muyi-zcy/tech-muyi-base-go/myResult"
 	"go.uber.org/zap"
-	"tech-muyi-base-go/config"
-	"tech-muyi-base-go/core"
-	"tech-muyi-base-go/logger"
-	"tech-muyi-base-go/myResult"
 	"time"
 )
 

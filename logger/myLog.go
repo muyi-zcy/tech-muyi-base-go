@@ -2,8 +2,8 @@ package logger
 
 import (
 	"context"
+	"github.com/muyi-zcy/tech-muyi-base-go/myContext"
 	"go.uber.org/zap"
-	"tech-muyi-base-go/myContext"
 )
 
 // addTraceIdToFields 自动从context中获取traceId并添加到日志字段中

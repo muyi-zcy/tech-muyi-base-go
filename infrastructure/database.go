@@ -4,8 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"tech-muyi-base-go/config"
-	"tech-muyi-base-go/logger"
+	"github.com/muyi-zcy/tech-muyi-base-go/config"
+	"github.com/muyi-zcy/tech-muyi-base-go/logger"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"

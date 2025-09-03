@@ -1,9 +1,9 @@
 package middleware
 
 import (
-	"tech-muyi-base-go/exception"
-	"tech-muyi-base-go/logger"
-	"tech-muyi-base-go/myResult"
+	"github.com/muyi-zcy/tech-muyi-base-go/exception"
+	"github.com/muyi-zcy/tech-muyi-base-go/logger"
+	"github.com/muyi-zcy/tech-muyi-base-go/myResult"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"

@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"bytes"
-	"tech-muyi-base-go/logger"
+	"github.com/muyi-zcy/tech-muyi-base-go/logger"
 	"time"
 
 	"github.com/gin-gonic/gin"

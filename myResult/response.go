@@ -1,8 +1,8 @@
 package myResult
 
 import (
+	"github.com/muyi-zcy/tech-muyi-base-go/exception"
 	"net/http"
-	"tech-muyi-base-go/exception"
 
 	"github.com/gin-gonic/gin"
 )
