@@ -62,3 +62,73 @@ type BaseDO struct {
 func (BaseDO) TableName() string {
 	return ""
 }
+
+func (b *BaseDO) SetId(id *int64) {
+	b.Id = *id
+}
+
+func (b *BaseDO) GetId() *int64 {
+	return &b.Id
+}
+
+func (b *BaseDO) SetRowVersion(rowVersion *int64) {
+	b.RowVersion = *rowVersion
+}
+func (b *BaseDO) GetRowVersion() *int64 {
+	return &b.RowVersion
+}
+
+func (b *BaseDO) SetCreator(creator string) {
+	b.Creator = creator
+}
+
+func (b *BaseDO) GetCreator() string {
+	return b.Creator
+}
+
+func (b *BaseDO) SetGmtCreate(gmtCreate time.Time) {
+	b.GmtCreate = gmtCreate
+}
+
+func (b *BaseDO) GetGmtCreate() time.Time {
+	return b.GmtCreate
+}
+
+func (b *BaseDO) SetOperator(operator string) {
+	b.Operator = operator
+}
+
+func (b *BaseDO) GetOperator() string {
+	return b.Operator
+}
+
+func (b *BaseDO) SetGmtModified(gmtModified time.Time) {
+	b.GmtModified = gmtModified
+}
+
+func (b *BaseDO) GetGmtModified() time.Time {
+	return b.GmtModified
+}
+
+func (b *BaseDO) SetTenantId(tenantId string) {
+	b.TenantID = tenantId
+}
+func (b *BaseDO) GetTenantId() string {
+	return b.TenantID
+}
+
+func (b *BaseDO) SetRowStatus(rowStatus gorm.DeletedAt) {
+	b.RowStatus = rowStatus
+}
+
+func (b *BaseDO) GetRowStatus() gorm.DeletedAt {
+	return b.RowStatus
+}
+
+func (b *BaseDO) GetExtAtt() string {
+	return b.ExtAtt
+}
+
+func (b *BaseDO) SetExtAtt(extAtt string) {
+	b.ExtAtt = extAtt
+}
