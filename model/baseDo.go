@@ -1,6 +1,7 @@
 package model
 
 import (
+	"database/sql/driver"
 	"fmt"
 	"gorm.io/gorm"
 	"strings"
@@ -43,6 +44,17 @@ func (dt *DateTime) UnmarshalJSON(data []byte) error {
 	*dt = DateTime(parsed)
 	return nil
 }
+func (t DateTime) Value() (driver.Value, error) {
+	return time.Time(t), nil
+}
+
+func (t *DateTime) Scan(value interface{}) error {
+	if v, ok := value.(time.Time); ok {
+		*t = DateTime(v)
+		return nil
+	}
+	return fmt.Errorf("cannot scan %v into DateTime", value)
+}
 
 // BaseDO 数据库实体的公共字段基础结构体
 // 所有数据库实体都应该继承这个结构体
@@ -50,9 +62,9 @@ type BaseDO struct {
 	Id          int64          `gorm:"column:id;primaryKey" json:"id,string"`  // 主键ID
 	RowVersion  int64          `gorm:"column:row_version" json:"rowVersion"`   // 乐观锁版本
 	Creator     string         `gorm:"column:creator" json:"creator"`          // 创建人
-	GmtCreate   time.Time      `gorm:"column:gmt_create" json:"gmtCreate"`     // 创建时间
+	GmtCreate   DateTime       `gorm:"column:gmt_create" json:"gmtCreate"`     // 创建时间
 	Operator    string         `gorm:"column:operator" json:"operator"`        // 更新人
-	GmtModified time.Time      `gorm:"column:gmt_modified" json:"gmtModified"` // 更新时间
+	GmtModified DateTime       `gorm:"column:gmt_modified" json:"gmtModified"` // 更新时间
 	ExtAtt      string         `gorm:"column:ext_att" json:"extAtt"`           // 附加字段
 	RowStatus   gorm.DeletedAt `gorm:"column:row_status" json:"rowStatus"`     // 行状态
 	TenantID    string         `gorm:"column:tenant_id" json:"tenantId"`       // 租户号
@@ -86,11 +98,11 @@ func (b *BaseDO) GetCreator() string {
 	return b.Creator
 }
 
-func (b *BaseDO) SetGmtCreate(gmtCreate time.Time) {
+func (b *BaseDO) SetGmtCreate(gmtCreate DateTime) {
 	b.GmtCreate = gmtCreate
 }
 
-func (b *BaseDO) GetGmtCreate() time.Time {
+func (b *BaseDO) GetGmtCreate() DateTime {
 	return b.GmtCreate
 }
 
@@ -102,11 +114,11 @@ func (b *BaseDO) GetOperator() string {
 	return b.Operator
 }
 
-func (b *BaseDO) SetGmtModified(gmtModified time.Time) {
+func (b *BaseDO) SetGmtModified(gmtModified DateTime) {
 	b.GmtModified = gmtModified
 }
 
-func (b *BaseDO) GetGmtModified() time.Time {
+func (b *BaseDO) GetGmtModified() DateTime {
 	return b.GmtModified
 }
 

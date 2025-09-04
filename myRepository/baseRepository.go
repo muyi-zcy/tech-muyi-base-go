@@ -89,12 +89,12 @@ func (r *baseRepository) Insert(ctx context.Context, entity interface{}) error {
 		baseDO.SetCreator(creator)
 	}
 
-	if baseDO, ok := entity.(interface{ SetGmtCreate(time time.Time) }); ok {
-		baseDO.SetGmtCreate(time.Now())
+	if baseDO, ok := entity.(interface{ SetGmtCreate(time model.DateTime) }); ok {
+		baseDO.SetGmtCreate(model.DateTime(time.Now()))
 	}
 
-	if baseDO, ok := entity.(interface{ SetGmtModified(time time.Time) }); ok {
-		baseDO.SetGmtModified(time.Now())
+	if baseDO, ok := entity.(interface{ SetGmtModified(time model.DateTime) }); ok {
+		baseDO.SetGmtModified(model.DateTime(time.Now()))
 	}
 
 	// 如果是BaseDO类型，设置默认行状态
@@ -129,8 +129,8 @@ func (r *baseRepository) Update(ctx context.Context, entity interface{}, id inte
 		baseDO.SetOperator(operator)
 	}
 
-	if baseDO, ok := entity.(interface{ SetGmtModified(time time.Time) }); ok {
-		baseDO.SetGmtModified(time.Now())
+	if baseDO, ok := entity.(interface{ SetGmtModified(time model.DateTime) }); ok {
+		baseDO.SetGmtModified(model.DateTime(time.Now()))
 	}
 
 	// 3. 增加乐观锁版本
