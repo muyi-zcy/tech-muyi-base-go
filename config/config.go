@@ -54,6 +54,21 @@ type DatabaseConfig struct {
 	MaxOpenConns    int    `mapstructure:"max_open_conns"`
 	MaxIdleConns    int    `mapstructure:"max_idle_conns"`
 	ConnMaxLifetime int    `mapstructure:"conn_max_lifetime"`
+	ConnMaxIdleTime int    `mapstructure:"conn_max_idle_time"`
+
+	// 连接与IO超时（秒）
+	ConnTimeoutSec  int `mapstructure:"conn_timeout_sec"`
+	ReadTimeoutSec  int `mapstructure:"read_timeout_sec"`
+	WriteTimeoutSec int `mapstructure:"write_timeout_sec"`
+
+	// GORM行为
+	SkipDefaultTransaction bool `mapstructure:"skip_default_transaction"`
+	PrepareStmt            bool `mapstructure:"prepare_stmt"`
+	SlowThresholdMS        int  `mapstructure:"slow_threshold_ms"`
+
+	// 其他DSN参数
+	Timezone    string `mapstructure:"timezone"`     // e.g. Local, Asia/Shanghai
+	ExtraParams string `mapstructure:"extra_params"` // 追加到 DSN 查询串
 }
 
 // RedisConfig Redis配置
@@ -62,6 +77,18 @@ type RedisConfig struct {
 	Port     int    `mapstructure:"port"`
 	Password string `mapstructure:"password"`
 	DB       int    `mapstructure:"db"`
+
+	// 连接池与超时
+	PoolSize        int `mapstructure:"pool_size"`
+	MinIdleConns    int `mapstructure:"min_idle_conns"`
+	DialTimeoutSec  int `mapstructure:"dial_timeout_sec"`
+	ReadTimeoutSec  int `mapstructure:"read_timeout_sec"`
+	WriteTimeoutSec int `mapstructure:"write_timeout_sec"`
+	PoolTimeoutSec  int `mapstructure:"pool_timeout_sec"`
+	IdleTimeoutSec  int `mapstructure:"idle_timeout_sec"`
+	MaxRetries      int `mapstructure:"max_retries"`
+	MinRetryBackoff int `mapstructure:"min_retry_backoff_ms"`
+	MaxRetryBackoff int `mapstructure:"max_retry_backoff_ms"`
 }
 
 // Init 初始化配置
@@ -187,10 +214,29 @@ func setDefaultConfig() {
 	viper.SetDefault("database.max_open_conns", 25)
 	viper.SetDefault("database.max_idle_conns", 25)
 	viper.SetDefault("database.conn_max_lifetime", 0)
+	viper.SetDefault("database.conn_max_idle_time", 0)
+	viper.SetDefault("database.conn_timeout_sec", 10)
+	viper.SetDefault("database.read_timeout_sec", 3)
+	viper.SetDefault("database.write_timeout_sec", 3)
+	viper.SetDefault("database.skip_default_transaction", true)
+	viper.SetDefault("database.prepare_stmt", false)
+	viper.SetDefault("database.slow_threshold_ms", 200)
+	viper.SetDefault("database.timezone", "Local")
+	viper.SetDefault("database.extra_params", "")
 	viper.SetDefault("redis.host", "localhost")
 	viper.SetDefault("redis.port", 6379)
 	viper.SetDefault("redis.password", "")
 	viper.SetDefault("redis.db", 0)
+	viper.SetDefault("redis.pool_size", 10)
+	viper.SetDefault("redis.min_idle_conns", 2)
+	viper.SetDefault("redis.dial_timeout_sec", 5)
+	viper.SetDefault("redis.read_timeout_sec", 3)
+	viper.SetDefault("redis.write_timeout_sec", 3)
+	viper.SetDefault("redis.pool_timeout_sec", 4)
+	viper.SetDefault("redis.idle_timeout_sec", 300)
+	viper.SetDefault("redis.max_retries", 2)
+	viper.SetDefault("redis.min_retry_backoff_ms", 8)
+	viper.SetDefault("redis.max_retry_backoff_ms", 512)
 }
 
 // GetConfig 获取全局配置

@@ -1,15 +1,14 @@
 package middleware
 
 import (
-	"github.com/muyi-zcy/tech-muyi-base-go/exception"
-	"github.com/muyi-zcy/tech-muyi-base-go/logger"
+	"github.com/muyi-zcy/tech-muyi-base-go/myException"
+	"github.com/muyi-zcy/tech-muyi-base-go/myLogger"
 	"github.com/muyi-zcy/tech-muyi-base-go/myResult"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
 
-// ExceptionHandler 异常处理中间件 - 专注于异常捕获和处理，不记录请求日志
 func ExceptionHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		defer func() {
@@ -18,7 +17,7 @@ func ExceptionHandler() gin.HandlerFunc {
 				path := c.Request.URL.Path
 
 				// 记录错误日志（自动获取traceId）
-				logger.ErrorCtx(c, "系统异常",
+				myLogger.ErrorCtx(c, "系统异常",
 					zap.Any("error", err),
 					zap.String("url", path),
 				)
@@ -26,18 +25,18 @@ func ExceptionHandler() gin.HandlerFunc {
 				// 根据错误类型返回不同的响应
 				var result myResult.MyResult
 				switch e := err.(type) {
-				case *exception.BusinessError:
+				case *myException.MyException:
 					result = myResult.FailWithCode(e.Code, e.Message)
-				case *exception.ValidationError:
+				case *myException.ValidationError:
 					result = myResult.BadRequest(e.Message)
-				case *exception.NotFoundError:
+				case *myException.NotFoundError:
 					result = myResult.NotFound(e.Error())
 				default:
 					result = myResult.Fail("系统内部错误")
 				}
 
 				// 记录错误响应（自动获取traceId）
-				logger.ErrorCtx(c, "ErrorResponse",
+				myLogger.ErrorCtx(c, "ErrorResponse",
 					zap.String("url", path),
 					zap.String("code", result.Code),
 					zap.String("message", result.Message),
@@ -57,8 +56,8 @@ func ExceptionHandler() gin.HandlerFunc {
 			var errors []error
 			for _, err := range c.Errors {
 				errors = append(errors, err.Err)
-				if bizErr, ok := err.Err.(*exception.BusinessError); ok {
-					logger.InfoCtx(c, "BusinessErrorResponse",
+				if bizErr, ok := err.Err.(*myException.MyException); ok {
+					myLogger.InfoCtx(c, "BusinessErrorResponse",
 						zap.String("url", c.Request.URL.Path),
 						zap.String("code", bizErr.Code),
 						zap.String("message", bizErr.Message),
@@ -66,7 +65,7 @@ func ExceptionHandler() gin.HandlerFunc {
 				}
 			}
 			// 记录所有错误（自动获取traceId）
-			logger.ErrorCtx(c, "HTTP Errors",
+			myLogger.ErrorCtx(c, "HTTP Errors",
 				zap.Errors("errors", errors),
 			)
 		}

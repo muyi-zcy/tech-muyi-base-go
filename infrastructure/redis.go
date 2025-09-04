@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 	"github.com/muyi-zcy/tech-muyi-base-go/config"
-	"github.com/muyi-zcy/tech-muyi-base-go/logger"
+	"github.com/muyi-zcy/tech-muyi-base-go/myLogger"
 
 	"github.com/go-redis/redis/v8"
 	"go.uber.org/zap"
+	"time"
 )
 
 var (
@@ -27,16 +28,33 @@ func InitRedis() error {
 		return fmt.Errorf("Redis配置未正确加载")
 	}
 
-	logger.Info("Redis配置",
+	myLogger.Info("Redis配置",
 		zap.String("host", redisConfig.Host),
 		zap.Int("port", redisConfig.Port),
-		zap.String("password", redisConfig.Password),
-		zap.Int("db", redisConfig.DB))
+		zap.String("password", func() string {
+			if redisConfig.Password != "" {
+				return "***"
+			}
+			return ""
+		}()),
+		zap.Int("db", redisConfig.DB),
+		zap.Int("poolSize", redisConfig.PoolSize),
+		zap.Int("minIdleConns", redisConfig.MinIdleConns))
 
 	RedisClient = redis.NewClient(&redis.Options{
-		Addr:     fmt.Sprintf("%s:%d", redisConfig.Host, redisConfig.Port),
-		Password: redisConfig.Password,
-		DB:       redisConfig.DB,
+		Addr:            fmt.Sprintf("%s:%d", redisConfig.Host, redisConfig.Port),
+		Password:        redisConfig.Password,
+		DB:              redisConfig.DB,
+		PoolSize:        redisConfig.PoolSize,
+		MinIdleConns:    redisConfig.MinIdleConns,
+		DialTimeout:     time.Duration(redisConfig.DialTimeoutSec) * time.Second,
+		ReadTimeout:     time.Duration(redisConfig.ReadTimeoutSec) * time.Second,
+		WriteTimeout:    time.Duration(redisConfig.WriteTimeoutSec) * time.Second,
+		PoolTimeout:     time.Duration(redisConfig.PoolTimeoutSec) * time.Second,
+		IdleTimeout:     time.Duration(redisConfig.IdleTimeoutSec) * time.Second,
+		MaxRetries:      redisConfig.MaxRetries,
+		MinRetryBackoff: time.Duration(redisConfig.MinRetryBackoff) * time.Millisecond,
+		MaxRetryBackoff: time.Duration(redisConfig.MaxRetryBackoff) * time.Millisecond,
 	})
 
 	// 测试连接

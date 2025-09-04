@@ -1,4 +1,4 @@
-package exception
+package myException
 
 import (
 	"sync"
@@ -241,8 +241,8 @@ func (e CommonErrorCodeEnum) GetResultMsg() string {
 }
 
 // ToBusinessError 转换为BusinessError
-func (e CommonErrorCodeEnum) ToBusinessError() *BusinessError {
-	return &BusinessError{
+func (e CommonErrorCodeEnum) ToBusinessError() *MyException {
+	return &MyException{
 		Code:    e.GetResultCode(),
 		Message: e.GetResultMsg(),
 	}
@@ -260,15 +260,15 @@ func RegisterErrorCode(codeEnum CommonErrorCodeEnum, code string, msg string) {
 }
 
 // GetErrorCodeByCode 根据状态码直接创建BusinessError
-func GetErrorCodeByCode(code string, msg string) *BusinessError {
-	return &BusinessError{
+func GetErrorCodeByCode(code string, msg string) *MyException {
+	return &MyException{
 		Code:    code,
 		Message: msg,
 	}
 }
 
 // GetErrorCodeByHTTPStatus 根据HTTP状态码创建BusinessError
-func GetErrorCodeByHTTPStatus(status int, msg string) *BusinessError {
+func GetErrorCodeByHTTPStatus(status int, msg string) *MyException {
 	code := "500" // 默认值
 
 	// 根据HTTP状态码映射到对应的错误码
@@ -301,7 +301,7 @@ func GetErrorCodeByHTTPStatus(status int, msg string) *BusinessError {
 		code = "504"
 	}
 
-	return &BusinessError{
+	return &MyException{
 		Code:    code,
 		Message: msg,
 	}

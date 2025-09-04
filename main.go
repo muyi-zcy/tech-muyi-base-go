@@ -101,7 +101,7 @@ func getSystemInfo(c *gin.Context) {
 		"framework":  "Gin",
 		"database":   "MySQL",
 		"cache":      "Redis",
-		"logger":     "Zap",
+		"myLogger":   "Zap",
 		"config":     "Viper",
 	}
 

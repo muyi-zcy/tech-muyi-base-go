@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"github.com/muyi-zcy/tech-muyi-base-go/config"
 	"github.com/muyi-zcy/tech-muyi-base-go/infrastructure"
-	"github.com/muyi-zcy/tech-muyi-base-go/logger"
 	"github.com/muyi-zcy/tech-muyi-base-go/middleware"
 	"github.com/muyi-zcy/tech-muyi-base-go/myContext"
+	"github.com/muyi-zcy/tech-muyi-base-go/myLogger"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -74,12 +74,12 @@ func (s *Starter) Initialize() error {
 func (s *Starter) InitializeLogger() error {
 	// 检查是否有配置
 	if s.App.Config == nil {
-		logger.Info("未找到配置，使用默认日志配置")
-		return logger.Init()
+		myLogger.Info("未找到配置，使用默认日志配置")
+		return myLogger.Init()
 	}
 
 	// 根据配置初始化日志
-	logConfig := logger.LogConfig{
+	logConfig := myLogger.LogConfig{
 		Level:      s.App.Config.Log.Level,
 		Filename:   s.App.Config.Log.Filename,
 		MaxSize:    s.App.Config.Log.MaxSize,
@@ -89,12 +89,12 @@ func (s *Starter) InitializeLogger() error {
 		Stdout:     s.App.Config.Log.Stdout,
 	}
 
-	if err := logger.InitWithConfig(logConfig); err != nil {
-		logger.Warn("使用配置初始化日志失败，使用默认初始化", zap.Error(err))
-		return logger.Init()
+	if err := myLogger.InitWithConfig(logConfig); err != nil {
+		myLogger.Warn("使用配置初始化日志失败，使用默认初始化", zap.Error(err))
+		return myLogger.Init()
 	}
 
-	logger.Info("日志系统初始化成功")
+	myLogger.Info("日志系统初始化成功")
 	return nil
 }
 
@@ -117,28 +117,28 @@ func (s *Starter) RegisterDefaultMiddlewares() {
 func (s *Starter) RegisterInfrastructure() error {
 	// 检查是否有配置
 	if s.App.Config == nil {
-		logger.Info("未找到配置，跳过基础设施注册")
+		myLogger.Info("未找到配置，跳过基础设施注册")
 		return nil
 	}
 
 	// 检查是否需要注册数据库
 	if s.needDatabase() {
-		logger.Info("初始化数据库连接")
+		myLogger.Info("初始化数据库连接")
 		if err := infrastructure.InitDatabase(); err != nil {
-			logger.Error("数据库连接初始化失败", zap.Error(err))
+			myLogger.Error("数据库连接初始化失败", zap.Error(err))
 			return fmt.Errorf("数据库连接初始化失败: %v", err)
 		}
-		logger.Info("数据库连接初始化成功")
+		myLogger.Info("数据库连接初始化成功")
 	}
 
 	// 检查是否需要注册Redis
 	if s.needRedis() {
-		logger.Info("初始化Redis连接")
+		myLogger.Info("初始化Redis连接")
 		if err := infrastructure.InitRedis(); err != nil {
-			logger.Error("Redis连接初始化失败", zap.Error(err))
+			myLogger.Error("Redis连接初始化失败", zap.Error(err))
 			return fmt.Errorf("Redis连接初始化失败: %v", err)
 		}
-		logger.Info("Redis连接初始化成功")
+		myLogger.Info("Redis连接初始化成功")
 	}
 
 	return nil
@@ -180,7 +180,7 @@ func (s *Starter) Run() error {
 		port = s.App.Config.Server.Port
 	}
 
-	logger.Info("应用启动中",
+	myLogger.Info("应用启动中",
 		zap.String("name", s.App.Name),
 		zap.String("version", s.App.Version),
 		zap.Int("port", port),

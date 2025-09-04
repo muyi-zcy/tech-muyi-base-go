@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/muyi-zcy/tech-muyi-base-go/config"
 	"github.com/muyi-zcy/tech-muyi-base-go/infrastructure"
-	"github.com/muyi-zcy/tech-muyi-base-go/logger"
+	"github.com/muyi-zcy/tech-muyi-base-go/myLogger"
 	"go.uber.org/zap"
 )
 
@@ -75,7 +75,7 @@ func (a *App) initialize() error {
 	}
 
 	// 记录应用启动日志
-	logger.Info("应用初始化完成",
+	myLogger.Info("应用初始化完成",
 		zap.String("appName", a.Name),
 		zap.String("appVersion", a.Version))
 
@@ -90,7 +90,7 @@ func (a *App) Initialize() error {
 // Shutdown 关闭应用，清理资源
 func (a *App) Shutdown() error {
 	// 同步日志
-	logger.Sync()
+	myLogger.Sync()
 
 	// 关闭数据库连接
 	if err := infrastructure.CloseDB(); err != nil {

@@ -1,7 +1,7 @@
 package myResult
 
 import (
-	"github.com/muyi-zcy/tech-muyi-base-go/exception"
+	"github.com/muyi-zcy/tech-muyi-base-go/myException"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -53,7 +53,7 @@ type MyResult struct {
 // Ok 成功返回
 func (r *MyResult) Ok(data interface{}) MyResult {
 	return MyResult{
-		Code:    exception.OK.GetResultCode(),
+		Code:    myException.OK.GetResultCode(),
 		Success: true,
 		Message: "success",
 		Data:    data,
@@ -64,7 +64,7 @@ func (r *MyResult) Ok(data interface{}) MyResult {
 // OkWithQuery 成功返回带查询参数
 func (r *MyResult) OkWithQuery(data interface{}, query *MyQuery) MyResult {
 	return MyResult{
-		Code:    exception.OK.GetResultCode(),
+		Code:    myException.OK.GetResultCode(),
 		Success: true,
 		Message: "success",
 		Data:    data,
@@ -75,7 +75,7 @@ func (r *MyResult) OkWithQuery(data interface{}, query *MyQuery) MyResult {
 // Fail 失败返回
 func (r *MyResult) Fail(message string) MyResult {
 	return MyResult{
-		Code:    exception.INTERNAL_SERVER_ERROR.GetResultCode(),
+		Code:    myException.INTERNAL_SERVER_ERROR.GetResultCode(),
 		Success: false,
 		Message: message,
 		Data:    nil,
@@ -97,9 +97,9 @@ func (r *MyResult) FailWithCode(code string, message string) MyResult {
 // FailWithError 失败返回带异常对象
 func (r *MyResult) FailWithError(err error) MyResult {
 	return MyResult{
-		Code:    exception.GetErrorCode(err),
+		Code:    myException.GetErrorCode(err),
 		Success: false,
-		Message: exception.GetErrorMessage(err),
+		Message: myException.GetErrorMessage(err),
 		Data:    nil,
 		Query:   nil,
 	}
@@ -108,7 +108,7 @@ func (r *MyResult) FailWithError(err error) MyResult {
 // BadRequest 400错误
 func (r *MyResult) BadRequest(message string) MyResult {
 	return MyResult{
-		Code:    exception.BAD_REQUEST.GetResultCode(),
+		Code:    myException.BAD_REQUEST.GetResultCode(),
 		Success: false,
 		Message: message,
 		Data:    nil,
@@ -119,7 +119,7 @@ func (r *MyResult) BadRequest(message string) MyResult {
 // Unauthorized 401错误
 func (r *MyResult) Unauthorized(message string) MyResult {
 	return MyResult{
-		Code:    exception.UNAUTHORIZED.GetResultCode(),
+		Code:    myException.UNAUTHORIZED.GetResultCode(),
 		Success: false,
 		Message: message,
 		Data:    nil,
@@ -130,7 +130,7 @@ func (r *MyResult) Unauthorized(message string) MyResult {
 // NotFound 404错误
 func (r *MyResult) NotFound(message string) MyResult {
 	return MyResult{
-		Code:    exception.NOT_FOUND.GetResultCode(),
+		Code:    myException.NOT_FOUND.GetResultCode(),
 		Success: false,
 		Message: message,
 		Data:    nil,
@@ -144,7 +144,7 @@ var Result = &MyResult{}
 // Ok 静态成功返回
 func Ok(data interface{}) MyResult {
 	return MyResult{
-		Code:    exception.OK.GetResultCode(),
+		Code:    myException.OK.GetResultCode(),
 		Success: true,
 		Message: "success",
 		Data:    data,
@@ -155,7 +155,7 @@ func Ok(data interface{}) MyResult {
 // OkWithMessage 静态成功返回带自定义消息
 func OkWithMessage(message string, data interface{}) MyResult {
 	return MyResult{
-		Code:    exception.OK.GetResultCode(),
+		Code:    myException.OK.GetResultCode(),
 		Success: true,
 		Message: message,
 		Data:    data,
@@ -166,7 +166,7 @@ func OkWithMessage(message string, data interface{}) MyResult {
 // OkWithQuery 静态成功返回带查询参数
 func OkWithQuery(data interface{}, query *MyQuery) MyResult {
 	return MyResult{
-		Code:    exception.OK.GetResultCode(),
+		Code:    myException.OK.GetResultCode(),
 		Success: true,
 		Message: "success",
 		Data:    data,
@@ -177,7 +177,7 @@ func OkWithQuery(data interface{}, query *MyQuery) MyResult {
 // Fail 静态失败返回
 func Fail(message string) MyResult {
 	return MyResult{
-		Code:    exception.INTERNAL_SERVER_ERROR.GetResultCode(),
+		Code:    myException.INTERNAL_SERVER_ERROR.GetResultCode(),
 		Success: false,
 		Message: message,
 		Data:    nil,
@@ -199,9 +199,9 @@ func FailWithCode(code string, message string) MyResult {
 // FailWithError 静态失败返回带异常对象
 func FailWithError(err error) MyResult {
 	return MyResult{
-		Code:    exception.GetErrorCode(err),
+		Code:    myException.GetErrorCode(err),
 		Success: false,
-		Message: exception.GetErrorMessage(err),
+		Message: myException.GetErrorMessage(err),
 		Data:    nil,
 		Query:   nil,
 	}
@@ -210,7 +210,7 @@ func FailWithError(err error) MyResult {
 // BadRequest 静态400错误
 func BadRequest(message string) MyResult {
 	return MyResult{
-		Code:    exception.BAD_REQUEST.GetResultCode(),
+		Code:    myException.BAD_REQUEST.GetResultCode(),
 		Success: false,
 		Message: message,
 		Data:    nil,
@@ -221,7 +221,7 @@ func BadRequest(message string) MyResult {
 // Unauthorized 静态401错误
 func Unauthorized(message string) MyResult {
 	return MyResult{
-		Code:    exception.UNAUTHORIZED.GetResultCode(),
+		Code:    myException.UNAUTHORIZED.GetResultCode(),
 		Success: false,
 		Message: message,
 		Data:    nil,
@@ -232,7 +232,7 @@ func Unauthorized(message string) MyResult {
 // NotFound 静态404错误
 func NotFound(message string) MyResult {
 	return MyResult{
-		Code:    exception.NOT_FOUND.GetResultCode(),
+		Code:    myException.NOT_FOUND.GetResultCode(),
 		Success: false,
 		Message: message,
 		Data:    nil,

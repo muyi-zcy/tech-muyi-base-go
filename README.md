@@ -1,524 +1,146 @@
-# tech-muyi-base-go
+## Tech MuYi Base Go
 
-一个基于 Go 语言的企业级 Web 服务基础框架，集成了 Gin、GORM、MySQL、Redis、Zap 日志等常用组件，提供开箱即用的基础设施和最佳实践。
+基于 Gin 的 Go 服务基础脚手架，内置配置中心（Viper）、日志（Zap + Lumberjack）、数据库（GORM/MySQL）、Redis、统一返回与中间件等，适合作为新服务的快速起步模板。
 
-## 🚀 特性
+### 功能特性
+- **配置管理**: 基于 Viper，支持多环境 `dev/local/pre/prod`，支持热更新
+- **日志体系**: Zap + 滚动日志（lumberjack），可选输出到控制台，支持 TraceId 透传
+- **Web 框架**: Gin，已内置基础中间件与健康检查
+- **数据访问**: GORM（MySQL 驱动）、Redis 客户端
+- **统一返回**: `myResult` 统一成功/失败响应
+- **错误与恢复**: 中间件捕获异常并记录
 
-- **Web 框架**: 基于 Gin 的高性能 HTTP 框架
-- **ORM框架**: 集成 GORM，提供便捷的数据库操作
-- **配置管理**: 使用 Viper 支持多环境配置
-- **数据库**: MySQL 数据库集成
-- **缓存**: Redis 缓存支持
-- **日志系统**: 基于 Zap 的结构化日志，自动携带 traceId
-- **健康检查**: 内置健康检查接口
-- **统一响应**: 标准化的 API 响应格式
-- **异常处理**: 全局异常处理中间件，支持自定义业务异常注册
-- **ID 生成**: 分布式 ID 生成器（Snowflake算法）
-- **上下文管理**: 自动管理请求上下文，支持 traceId 和 ssoId
-- **分页查询**: 内置分页查询支持
+### 环境要求
+- Go 1.22.x
+- 可选：MySQL、Redis（如不需要可不启用对应功能）
 
-## 📋 系统要求
+### 目录结构（节选）
+```
+app/                     # 各环境配置文件（TOML）
+config/                  # 配置装载与默认值
+core/                    # 应用初始化、启动器
+infrastructure/          # 数据库、Redis 初始化与连接
+middleware/              # 日志、异常处理等
+model/                   # 数据模型
+myContext/, myException/ # 上下文与异常封装
+myLogger/                # 日志封装
+myObject/                # 常用对象与工具
+myRepository/            # 仓储基础封装
+myResult/                # 统一返回结构
+myUtils/                 # 常用工具
+main.go                  # 入口，注册路由与启动
+Dockerfile               # 多阶段构建镜像
+start.sh                 # 容器/本地启动脚本（Linux/容器环境）
+```
 
-- Go 1.22.2 或更高版本
-- MySQL 5.7+ 或 8.0+
-- Redis 6.0+
-
-## 🛠️ 安装和运行
-
-### 1. 克隆项目
-
+### 快速开始（本地）
+1) 拉取依赖
 ```bash
-git clone <repository-url>
-cd tech-muyi-base-go
+go mod download
 ```
 
-### 2. 安装依赖
-
+2) 选择配置（默认 `--env dev`，亦可通过 `--config` 指定文件路径）
 ```bash
-go mod tidy
+# 使用内置环境：dev/local/pre/prod
+go run main.go --env dev
+
+# 或者指定配置文件路径（TOML），优先读取当前目录或 app/ 目录
+go run main.go --config ./app/app-dev.conf
 ```
 
-### 3. 配置环境
+3) 访问服务
+- 根路径：`GET /` 返回欢迎信息
+- 健康检查：`GET /api/v1/system/health`
+- 当前安全配置：`GET /api/v1/system/config`
+- 系统信息：`GET /api/v1/system/info`
+- 测试：`GET /api/v1/test/ping`、`POST /api/v1/test/echo`、`GET /api/v1/test/error`
 
-项目支持多环境配置，默认使用 `app-dev.conf`：
-
+示例（curl）
 ```bash
-# 开发环境
-go run main.go -env=dev
-
-# 本地环境
-go run main.go -env=local
-
-# 预发布环境
-go run main.go -env=pre
-
-# 生产环境
-go run main.go -env=prod
-
-# 指定配置文件
-go run main.go -config=./custom.conf
+curl http://127.0.0.1:8080/
+curl http://127.0.0.1:8080/api/v1/system/health
+curl http://127.0.0.1:8080/api/v1/test/ping
+curl -X POST http://127.0.0.1:8080/api/v1/test/echo -H "Content-Type: application/json" -d '{"hello":"world"}'
 ```
 
-### 4. 运行服务
+### 配置说明
+配置类型为 TOML，文件名按环境约定为：`app-dev.conf`、`app-local.conf`、`app-pre.conf`、`app-prod.conf`。
 
+程序参数：
+- `--env`：dev/local/pre/prod（二选一，无 `--config` 时生效）
+- `--config`：自定义配置文件路径（优先级更高）
+
+关键项（`config/config.go` 中的默认值可参考）：
+- **server**：`port`、`mode`
+- **log**：`level`、`filename`、`maxsize`、`maxage`、`maxbackups`、`compress`、`stdout`、`log_sql`
+- **database**：
+  - 基础：`driver`、`host`、`port`、`username`、`password`、`database`
+  - 连接池：`max_open_conns`、`max_idle_conns`、`conn_max_lifetime`、`conn_max_idle_time`
+  - 超时（秒）：`conn_timeout_sec`、`read_timeout_sec`、`write_timeout_sec`
+  - 行为：`skip_default_transaction`、`prepare_stmt`、`slow_threshold_ms`
+  - DSN：`timezone`（如 Local/Asia/Shanghai）、`extra_params`
+- **redis**：
+  - 基础：`host`、`port`、`password`、`db`
+  - 连接池：`pool_size`、`min_idle_conns`
+  - 超时（秒）：`dial_timeout_sec`、`read_timeout_sec`、`write_timeout_sec`、`pool_timeout_sec`、`idle_timeout_sec`
+  - 重试：`max_retries`、`min_retry_backoff_ms`、`max_retry_backoff_ms`
+
+当配置文件缺失时，会回落到内置默认值并继续运行。
+
+### 运行与构建
+- 直接运行
 ```bash
-go run main.go
+go run main.go --env dev
 ```
 
-服务将在配置的端口上启动（默认 8080）。
-
-## 📁 项目结构
-
-```
-tech-muyi-base-go/
-├── app/                    # 配置文件目录
-│   ├── app-dev.conf       # 开发环境配置
-│   ├── app-local.conf     # 本地环境配置
-│   ├── app-pre.conf       # 预发布环境配置
-│   └── app-prod.conf      # 生产环境配置
-├── config/                 # 配置管理
-│   └── config.go          # 配置结构和初始化
-├── core/                   # 核心应用逻辑
-│   ├── app.go             # 应用实例管理
-│   ├── health.go          # 健康检查
-│   └── starter.go         # 应用启动器
-├── exception/              # 异常处理
-│   ├── common_error_code.go # 通用错误码
-│   └── exception.go       # 异常处理逻辑
-├── infrastructure/         # 基础设施
-│   ├── database.go        # 数据库连接管理（已集成GORM）
-│   └── redis.go           # Redis 连接管理
-├── logger/                 # 日志系统
-│   ├── logger.go          # 日志配置
-│   └── myLog.go           # 日志工具
-├── middleware/             # 中间件
-│   ├── exception.go       # 异常处理中间件
-│   └── logger.go          # 日志中间件
-├── model/                  # 数据模型
-│   ├── baseDo.go          # 基础数据模型
-├── myContext/              # 上下文管理
-│   └── context.go         # 自定义上下文
-├── myId/                   # ID 生成器
-│   └── myId.go            # 分布式 ID 生成
-├── myResult/               # 响应结果
-│   └── response.go        # 统一响应格式
-├── repository/             # 数据访问层
-│   ├── baseRepository.go  # 基础数据访问
-├── utils/                  # 工具函数
-│   ├── stringUtils.go     # 字符串工具
-│   └── timeUtils.go       # 时间工具
-├── main.go                 # 主程序入口
-├── go.mod                  # Go 模块文件
-├── Dockerfile              # Docker 镜像构建文件
-├── start.sh                # 启动脚本
-└── README.md               # 项目说明文档
-```
-
-## 🔧 配置说明
-
-### 基础配置
-
-配置文件使用 TOML 格式，主要配置项包括：
-
-```toml
-# 应用配置
-app_name = "tech-muyi-base-go"
-version = "1.0.0"
-
-# 服务器配置
-[server]
-port = 8080
-mode = "debug"
-
-# 日志配置
-[log]
-level = "info"
-filename = "logs/app.log"
-maxsize = 100
-maxage = 30
-maxbackups = 10
-compress = true
-stdout = true
-log_sql = false
-
-# 数据库配置
-[database]
-driver = "mysql"
-host = "localhost"
-port = 3306
-username = "root"
-password = "password"
-database = "test"
-max_open_conns = 100
-max_idle_conns = 10
-conn_max_lifetime = 3600
-
-# Redis配置
-[redis]
-host = "localhost"
-port = 6379
-password = ""
-db = 0
-```
-
-## 📡 API 接口文档
-
-### 基础接口
-
-#### 1. 欢迎页面
-- **GET** `/`
-- **描述**: 服务欢迎页面
-- **响应**: 欢迎信息
-
-#### 2. 健康检查
-- **GET** `/ok`
-- **描述**: 服务健康状态检查
-- **响应**: ok
-
-#### 3. 系统信息
-- **GET** `/api/v1/system/info`
-- **描述**: 获取系统基本信息
-- **响应**: 系统版本、框架等信息
-
-#### 4. 配置信息
-- **GET** `/api/v1/system/config`
-- **描述**: 获取安全配置信息
-- **响应**: 应用配置（不包含敏感信息）
-
-### 测试接口
-
-#### 1. Ping 测试
-- **GET** `/api/v1/test/ping`
-- **描述**: 服务连通性测试
-- **响应**: pong 响应
-
-#### 2. Echo 测试
-- **POST** `/api/v1/test/echo`
-- **描述**: 回显请求数据
-- **请求体**: 任意JSON数据
-- **响应**: 回显的请求数据
-
-#### 3. 错误测试
-- **GET** `/api/v1/test/error`
-- **描述**: 测试错误处理
-- **响应**: 错误信息
-
-## 📊 响应格式
-
-所有API接口都使用统一的响应格式：
-
-### 成功响应
-```json
-{
-  "code": "200",
-  "success": true,
-  "message": "success",
-  "data": {...},
-  "query": null
-}
-```
-
-### 失败响应
-```json
-{
-  "code": "500",
-  "success": false,
-  "message": "错误描述",
-  "data": null,
-  "query": null
-}
-```
-
-### 分页响应
-```json
-{
-  "code": "200",
-  "success": true,
-  "message": "success",
-  "data": [...],
-  "query": {
-    "size": 10,
-    "current": 1,
-    "total": 100
-  }
-}
-```
-
-## 🧪 测试
-
-### 运行测试
+- 编译二进制
 ```bash
-go test ./...
+go build -o bin/app main.go
+./bin/app --env dev
 ```
 
-### 测试覆盖率
+### Docker 使用
+镜像使用多阶段构建，并在容器内执行 `/home/app/start.sh`（默认启动 `./main`）。Dockerfile 暴露端口 `28080`，请按需映射。
+
+1) 构建镜像
 ```bash
-go test -cover ./...
+docker build -t tech-muyi-base-go:latest .
 ```
 
-## 📝 日志
-
-项目使用 Zap 日志库，支持结构化日志和多种输出格式：
-
-- 控制台输出
-- 文件输出（支持日志轮转）
-- 结构化字段
-- 不同日志级别
-- 自动携带 traceId
-
-## 🔒 安全特性
-
-- 配置信息脱敏
-- 全局异常处理
-- 请求参数验证
-- 日志安全记录
-- SQL注入防护（通过GORM）
-
-## 🚀 部署
-
-### Docker 部署
-
+2) 运行容器（映射端口与配置）
 ```bash
-# 构建镜像
-docker build -t tech-muyi-base-go .
+# 使用容器内默认配置（若镜像包含 app/*.conf）
+docker run -d --name tech-muyi-go -p 28080:28080 tech-muyi-base-go:latest
 
-# 运行容器
-docker run -p 8080:8080 tech-muyi-base-go
+# 或挂载本地配置文件到容器内
+docker run -d --name tech-muyi-go \
+  -p 28080:28080 \
+  -v $(pwd)/app/app-dev.conf:/home/app/app-dev.conf \
+  tech-muyi-base-go:latest
 ```
 
-### 构建二进制文件
-
+3) 访问
 ```bash
-go build -o tech-muyi-base-go main.go
+curl http://127.0.0.1:28080/
 ```
 
-## 🎯 核心功能详解
+注意：容器内启动脚本为 Linux shell；在 Windows 本地直接双击 `start.sh` 可能不可用，建议用 `go run` 或 `go build` 启动。
 
-### 1. 上下文管理
+### 已内置路由（`main.go`）
+- `GET /` 欢迎信息
+- `GET /api/v1/system/health` 健康检查
+- `GET /api/v1/system/config` 当前安全配置
+- `GET /api/v1/system/info` 系统信息
+- `GET /api/v1/test/ping` 测试连通
+- `POST /api/v1/test/echo` 回显请求体
+- `GET /api/v1/test/error` 返回测试错误
 
-项目提供了强大的上下文管理功能，自动处理请求中的 traceId 和 ssoId：
+### 常见问题
+- 端口不一致：本地默认端口由配置 `server.port` 决定；Dockerfile 暴露 `28080`，请对应映射。
+- 配置未生效：检查 `--config` 路径或 `--env` 是否正确；程序优先读取当前目录下配置文件，其次 `app/` 目录。
+- 日志不输出到控制台：将 `log.stdout` 设为 `true`。
 
-```go
-// 自动从请求头或cookie中获取traceId
-// 如果都获取不到，则生成新的traceId
-// traceId在请求头或cookie中的key为：X-Trace-ID
-// ssoId在请求头或cookie中的key为：X-SSO-ID
+### 许可
+本项目示例代码可自由使用与修改，具体以仓库实际 LICENSE 为准。
 
-// 在业务代码中获取traceId
-traceId := myContext.GetTraceId(ctx)
 
-// 在业务代码中获取ssoId
-ssoId := myContext.GetSsoId(ctx)
-```
-
-### 2. 日志系统
-
-日志系统自动携带 traceId，便于问题追踪：
-
-```go
-// 业务日志记录时不需要手动处理traceId
-// 系统会自动从上下文中提取并携带
-logger.InfoCtx(ctx, "用户登录", zap.String("username", username))
-
-// 也可以使用常规日志记录方法
-logger.Info("系统启动完成")
-```
-
-### 3. 异常处理增强功能
-
-#### 3.1 自定义业务异常注册
-
-支持动态注册新的业务异常码，满足不同业务场景的需求：
-
-```go
-// 定义自定义错误码枚举
-const (
-    // 用户相关错误 20000-29999
-    USER_NOT_FOUND CommonErrorCodeEnum = iota + 20000
-    USER_ALREADY_EXISTS
-    USER_PASSWORD_INVALID
-    
-    // 订单相关错误 30000-39999
-    ORDER_NOT_FOUND
-    ORDER_ALREADY_PAID
-)
-
-// 在init函数中注册自定义错误码
-func init() {
-    RegisterErrorCode(USER_NOT_FOUND, "20000", "用户不存在")
-    RegisterErrorCode(USER_ALREADY_EXISTS, "20001", "用户已存在")
-    RegisterErrorCode(USER_PASSWORD_INVALID, "20002", "密码错误")
-    
-    RegisterErrorCode(ORDER_NOT_FOUND, "30000", "订单不存在")
-    RegisterErrorCode(ORDER_ALREADY_PAID, "30001", "订单已支付")
-}
-
-// 在业务代码中使用
-if userNotFound {
-    // 方式1：使用注册的错误码创建异常
-    return nil, USER_NOT_FOUND.ToBusinessError()
-}
-```
-
-#### 3.2 直接抛状态码异常
-
-支持直接通过自定义状态码或HTTP状态码创建异常：
-
-```go
-// 方式1：通过自定义错误码创建异常
-err := GetErrorCodeByCode("40001", "业务参数错误")
-return nil, err
-
-// 方式2：通过HTTP状态码创建异常
-err := GetErrorCodeByHTTPStatus(404, "资源不存在")
-panic(err) // 由异常处理中间件捕获
-```
-
-#### 3.3 返回异常状态码
-
-提供多种方式返回异常响应：
-
-```go
-// 在控制器中使用
-func GetUser(ctx *gin.Context) {
-    user, err := userService.GetUser(id)
-    if err != nil {
-        // 方式1：使用myResult.ErrorWithError返回错误
-        myResult.ErrorWithError(ctx, err)
-        return
-    }
-    
-    myResult.Success(ctx, user)
-}
-
-// 方式2：直接返回指定状态码的错误
-func HandleNotFoundError(ctx *gin.Context) {
-    myResult.NotFoundResponse(ctx, "用户不存在")
-}
-
-// 方式3：返回自定义错误码
-func HandleCustomError(ctx *gin.Context) {
-    myResult.ErrorWithCode(ctx, "20000", "用户不存在")
-}
-```
-
-#### 3.4 异常处理中间件
-
-全局异常处理中间件会自动捕获并处理各种类型的异常：
-
-```go
-// 异常处理中间件会自动处理以下类型的异常：
-// 1. BusinessError - 业务异常
-// 2. ValidationError - 验证异常
-// 3. NotFoundError - 资源不存在异常
-// 4. 其他标准error类型
-
-// 中间件会根据异常类型返回对应的HTTP状态码和错误信息
-```
-
-### 4. 分布式ID生成器
-
-项目集成了基于Snowflake算法的分布式ID生成器：
-
-```go
-// 生成唯一ID
-id, err := myId.NextId()
-if err != nil {
-    // 处理错误
-    return
-}
-// 使用生成的ID
-user.Id = id
-```
-
-### 5. 统一响应格式
-
-所有API接口都使用统一的响应格式，便于前端处理：
-
-```go
-// 成功响应
-myResult.Success(ctx, data)
-
-// 带分页的成功响应
-myResult.SuccessWithQuery(ctx, data, query)
-
-// 错误响应
-myResult.ErrorWithError(ctx, err)
-```
-
-## 📦 核心组件使用说明
-
-### 上下文管理组件
-
-上下文管理组件位于 `myContext` 包中，提供了完整的上下文管理机制：
-
-1. **ContextMiddleware**: 上下文管理中间件，自动处理请求中的 traceId 和 ssoId
-2. **GetTraceId**: 从上下文中获取 traceId
-3. **GetSsoId**: 从上下文中获取 ssoId
-4. **SetTraceId**: 设置上下文中的 traceId
-5. **SetSsoId**: 设置上下文中的 ssoId
-
-### 日志组件
-
-日志组件位于 `logger` 包中，提供了强大的日志记录功能：
-
-1. **InfoCtx/ErrorCtx/DebugCtx**: 带上下文的日志记录方法，自动携带 traceId
-2. **Info/Error/Debug**: 常规日志记录方法
-3. **InitWithConfig**: 根据配置初始化日志系统
-4. **Logger**: 获取底层 zap.Logger 实例
-
-### 异常处理组件
-
-异常处理组件位于 `exception` 包中，提供了完整的异常处理机制：
-
-1. **CommonErrorCodeEnum**: 预定义的HTTP状态码和系统级错误码
-2. **BusinessError**: 业务异常类型
-3. **ValidationError**: 验证异常类型
-4. **NotFoundError**: 资源不存在异常类型
-5. **RegisterErrorCode**: 注册自定义业务异常
-6. **GetErrorCodeByCode**: 通过自定义错误码创建异常
-7. **GetErrorCodeByHTTPStatus**: 通过HTTP状态码创建异常
-
-### 响应结果组件
-
-响应结果组件位于 `myResult` 包中，提供了统一的API响应格式：
-
-1. **MyResult**: 统一响应结构体
-2. **Success**: 成功响应
-3. **ErrorWithError**: 错误响应
-4. **ErrorWithCode**: 自定义错误码响应
-5. **BadRequestResponse**: 400错误响应
-6. **UnauthorizedResponse**: 401错误响应
-7. **NotFoundResponse**: 404错误响应
-
-### 数据访问层组件
-
-数据访问层组件位于 `repository` 包中，提供了基础的数据访问功能：
-
-1. **BaseRepository**: 基础仓库接口，提供增删改查等通用方法
-2. **BaseRepositoryImpl**: 基础仓库实现
-3. **UserRepository**: 用户仓库接口
-4. **UserRepositoryImpl**: 用户仓库实现
-
-### 服务层组件
-
-服务层组件位于 `service` 包中，提供了业务逻辑处理功能：
-
-1. **UserService**: 用户服务接口
-2. **UserServiceImpl**: 用户服务实现
-
-## 🤝 贡献
-
-欢迎提交 Issue 和 Pull Request！
-
-## 📄 许可证
-
-本项目采用 MIT 许可证。
-
-## 📞 联系方式
-
-如有问题，请通过以下方式联系：
-
-- 提交 Issue
-- 发送邮件
-- 项目讨论区

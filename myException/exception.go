@@ -1,30 +1,30 @@
-package exception
+package myException
 
 import (
 	"fmt"
 )
 
-// BusinessError 业务异常
-type BusinessError struct {
+// MyException 业务异常
+type MyException struct {
 	Code    string
 	Message string
 }
 
-func (e *BusinessError) Error() string {
-	return fmt.Sprintf("BusinessError: code=%s, message=%s", e.Code, e.Message)
+func (e *MyException) Error() string {
+	return fmt.Sprintf("MyException: code=%s, message=%s", e.Code, e.Message)
 }
 
 // NewBusinessError 创建业务异常
-func NewBusinessError(code string, message string) *BusinessError {
-	return &BusinessError{
+func NewMyException(code string, message string) *MyException {
+	return &MyException{
 		Code:    code,
 		Message: message,
 	}
 }
 
 // NewBusinessErrorFromCode 从错误码创建业务异常
-func NewBusinessErrorFromCode(errorCode CommonErrorCodeEnum) *BusinessError {
-	return &BusinessError{
+func NewBusinessErrorFromCode(errorCode CommonErrorCodeEnum) *MyException {
+	return &MyException{
 		Code:    errorCode.GetResultCode(),
 		Message: errorCode.GetResultMsg(),
 	}
@@ -69,7 +69,7 @@ func NewNotFoundError(resource string, id interface{}) *NotFoundError {
 // GetErrorCode 获取错误码
 func GetErrorCode(err error) string {
 	switch e := err.(type) {
-	case *BusinessError:
+	case *MyException:
 		return e.Code
 	case *ValidationError:
 		return BAD_REQUEST.GetResultCode()
@@ -83,7 +83,7 @@ func GetErrorCode(err error) string {
 // GetErrorMessage 获取错误消息
 func GetErrorMessage(err error) string {
 	switch e := err.(type) {
-	case *BusinessError:
+	case *MyException:
 		return e.Message
 	case *ValidationError:
 		return e.Message

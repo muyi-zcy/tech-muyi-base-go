@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"bytes"
-	"github.com/muyi-zcy/tech-muyi-base-go/logger"
+	"github.com/muyi-zcy/tech-muyi-base-go/myLogger"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -33,7 +33,7 @@ func Logger() gin.HandlerFunc {
 		userAgent := c.Request.UserAgent()
 
 		// 记录请求开始日志（自动获取traceId）
-		logger.InfoCtx(c.Request.Context(), "Request started",
+		myLogger.InfoCtx(c.Request.Context(), "Request started",
 			zap.String("httpMethod", method),
 			zap.String("httpPath", path),
 			zap.String("remoteIp", remoteIP),
@@ -50,7 +50,7 @@ func Logger() gin.HandlerFunc {
 		responseBody := blw.body.String()
 
 		// 合并请求开始和结束信息
-		logger.InfoCtx(c.Request.Context(), "Request finished",
+		myLogger.InfoCtx(c.Request.Context(), "Request finished",
 			zap.String("httpMethod", method),
 			zap.String("httpPath", path),
 			zap.String("remoteIp", remoteIP),
@@ -68,7 +68,7 @@ func Logger() gin.HandlerFunc {
 			for _, err := range c.Errors {
 				errors = append(errors, err.Err)
 			}
-			logger.ErrorCtx(c.Request.Context(), "HTTP Errors",
+			myLogger.ErrorCtx(c.Request.Context(), "HTTP Errors",
 				zap.Errors("errors", errors),
 			)
 		}

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/muyi-zcy/tech-muyi-base-go/config"
-	"github.com/muyi-zcy/tech-muyi-base-go/logger"
+	"github.com/muyi-zcy/tech-muyi-base-go/myLogger"
 	"go.uber.org/zap"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -34,8 +34,20 @@ func InitDatabase() error {
 	var dsn string
 	switch dbConfig.Driver {
 	case "mysql":
-		dsn = fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+		// 基础 DSN
+		base := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s",
 			dbConfig.Username, dbConfig.Password, dbConfig.Host, dbConfig.Port, dbConfig.Database)
+		// 查询参数
+		tz := dbConfig.Timezone
+		if tz == "" {
+			tz = "Local"
+		}
+		params := fmt.Sprintf("charset=utf8mb4&parseTime=True&loc=%s&timeout=%ds&readTimeout=%ds&writeTimeout=%ds",
+			tz, dbConfig.ConnTimeoutSec, dbConfig.ReadTimeoutSec, dbConfig.WriteTimeoutSec)
+		if dbConfig.ExtraParams != "" {
+			params = params + "&" + dbConfig.ExtraParams
+		}
+		dsn = fmt.Sprintf("%s?%s", base, params)
 	default:
 		return fmt.Errorf("不支持的数据库驱动: %s", dbConfig.Driver)
 	}
@@ -44,13 +56,18 @@ func InitDatabase() error {
 	var gormConfig *gorm.Config
 	if logConfig.LogSQL {
 		gormConfig = &gorm.Config{
-			Logger: &gormLoggerImpl{},
+			Logger:                 &gormLoggerImpl{},
+			PrepareStmt:            dbConfig.PrepareStmt,
+			SkipDefaultTransaction: dbConfig.SkipDefaultTransaction,
 		}
 	} else {
-		gormConfig = &gorm.Config{}
+		gormConfig = &gorm.Config{
+			PrepareStmt:            dbConfig.PrepareStmt,
+			SkipDefaultTransaction: dbConfig.SkipDefaultTransaction,
+		}
 	}
 
-	logger.Info("数据库连接字符串", zap.String("driver", dbConfig.Driver))
+	myLogger.Info("数据库连接字符串", zap.String("driver", dbConfig.Driver))
 
 	var err error
 	DB, err = gorm.Open(mysql.Open(dsn), gormConfig)
@@ -76,10 +93,14 @@ func InitDatabase() error {
 	}
 
 	connMaxLifetime := dbConfig.ConnMaxLifetime
+	connMaxIdleTime := dbConfig.ConnMaxIdleTime
 
 	sqlDB.SetMaxOpenConns(maxOpenConns)                                    // 最大打开连接数
 	sqlDB.SetMaxIdleConns(maxIdleConns)                                    // 最大空闲连接数
 	sqlDB.SetConnMaxLifetime(time.Duration(connMaxLifetime) * time.Second) // 连接最大生命周期
+	if connMaxIdleTime > 0 {
+		sqlDB.SetConnMaxIdleTime(time.Duration(connMaxIdleTime) * time.Second)
+	}
 
 	// 测试连接
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -89,7 +110,7 @@ func InitDatabase() error {
 		return fmt.Errorf("数据库连接测试失败: %v", err)
 	}
 
-	logger.Info("GORM数据库连接初始化成功")
+	myLogger.Info("GORM数据库连接初始化成功")
 	return nil
 }
 
@@ -105,17 +126,17 @@ func (l *gormLoggerImpl) LogMode(level gormLogger.LogLevel) gormLogger.Interface
 
 // Info 记录信息日志
 func (l *gormLoggerImpl) Info(ctx context.Context, msg string, data ...interface{}) {
-	logger.InfoCtx(ctx, fmt.Sprintf(msg, data...))
+	myLogger.InfoCtx(ctx, fmt.Sprintf(msg, data...))
 }
 
 // Warn 记录警告日志
 func (l *gormLoggerImpl) Warn(ctx context.Context, msg string, data ...interface{}) {
-	logger.WarnCtx(ctx, fmt.Sprintf(msg, data...))
+	myLogger.WarnCtx(ctx, fmt.Sprintf(msg, data...))
 }
 
 // Error 记录错误日志
 func (l *gormLoggerImpl) Error(ctx context.Context, msg string, data ...interface{}) {
-	logger.ErrorCtx(ctx, fmt.Sprintf(msg, data...))
+	myLogger.ErrorCtx(ctx, fmt.Sprintf(msg, data...))
 }
 
 // Trace 记录SQL执行轨迹
@@ -130,13 +151,19 @@ func (l *gormLoggerImpl) Trace(ctx context.Context, begin time.Time, fc func() (
 		zap.Duration("elapsed", elapsed),
 	}
 
+	// 慢 SQL 阈值
+	slow := time.Duration(config.GetDatabaseConfig().SlowThresholdMS) * time.Millisecond
+	if slow <= 0 {
+		slow = 200 * time.Millisecond
+	}
+
 	if err != nil {
 		fields = append(fields, zap.Error(err))
-		logger.ErrorCtx(ctx, "SQL执行", fields...)
-	} else if elapsed > 200*time.Millisecond {
-		logger.WarnCtx(ctx, "慢SQL", fields...)
+		myLogger.ErrorCtx(ctx, "SQL执行", fields...)
+	} else if elapsed > slow {
+		myLogger.WarnCtx(ctx, "慢SQL", fields...)
 	} else {
-		logger.DebugCtx(ctx, "SQL执行", fields...)
+		myLogger.DebugCtx(ctx, "SQL执行", fields...)
 	}
 }
 

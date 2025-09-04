@@ -1,4 +1,4 @@
-package logger
+package myLogger
 
 import (
 	"go.uber.org/zap"
@@ -75,7 +75,7 @@ func Init() error {
 	encoderConfig := zapcore.EncoderConfig{
 		TimeKey:        "time",
 		LevelKey:       "level",
-		NameKey:        "logger",
+		NameKey:        "myLogger",
 		CallerKey:      "caller",
 		MessageKey:     "message",
 		StacktraceKey:  "stacktrace",
@@ -135,7 +135,7 @@ func InitWithConfig(logConfig LogConfig) error {
 	encoderConfig := zapcore.EncoderConfig{
 		TimeKey:        "time",
 		LevelKey:       "level",
-		NameKey:        "logger",
+		NameKey:        "myLogger",
 		CallerKey:      "caller",
 		MessageKey:     "message",
 		StacktraceKey:  "stacktrace",
