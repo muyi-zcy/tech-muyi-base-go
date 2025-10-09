@@ -84,7 +84,7 @@ func (r *baseRepository) Insert(ctx context.Context, entity interface{}) error {
 		baseDO.SetId(&id)
 	}
 
-	if baseDO, ok := entity.(interface{ SetCreator(creator string) }); ok {
+	if baseDO, ok := entity.(interface{ SetCreator(creator *string) }); ok {
 		creator := myContext.GetSsoId(ctx)
 		baseDO.SetCreator(creator)
 	}
@@ -124,7 +124,7 @@ func (r *baseRepository) Update(ctx context.Context, entity interface{}, id inte
 	}
 
 	// 2. 自动填充公共字段
-	if baseDO, ok := entity.(interface{ SetOperator(operator string) }); ok {
+	if baseDO, ok := entity.(interface{ SetOperator(operator *string) }); ok {
 		operator := myContext.GetSsoId(ctx)
 		baseDO.SetOperator(operator)
 	}

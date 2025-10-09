@@ -7,8 +7,9 @@ import (
 )
 
 const (
-	TraceId = "traceId"
-	SsoId   = "ssoId"
+	TraceId    = "traceId"
+	SsoId      = "ssoId"
+	SsoVersion = "ssoVersion"
 )
 
 // GetTraceId 从Gin上下文获取traceId
@@ -108,16 +109,24 @@ func ssoIdFromContext(ctx context.Context) string {
 	}
 
 	// 使用自定义类型作为key，避免字符串冲突
-	if traceId, ok := ctx.Value(SsoId).(string); ok {
-		return traceId
+	if ssoId, ok := ctx.Value(SsoId).(string); ok {
+		return ssoId
 	}
 	return ""
 }
 
 // GetTraceIdFromContext 从context中获取traceId的便捷方法
-func GetTraceId(ctx context.Context) string {
-	return traceIdFromContext(ctx)
+func GetTraceId(ctx context.Context) *string {
+	result := traceIdFromContext(ctx)
+	if result == "" {
+		return nil
+	}
+	return &result
 }
-func GetSsoId(ctx context.Context) string {
-	return ssoIdFromContext(ctx)
+func GetSsoId(ctx context.Context) *string {
+	result := ssoIdFromContext(ctx)
+	if result == "" {
+		return nil
+	}
+	return &result
 }

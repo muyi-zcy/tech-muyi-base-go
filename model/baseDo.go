@@ -61,13 +61,13 @@ func (t *DateTime) Scan(value interface{}) error {
 type BaseDO struct {
 	Id          int64          `gorm:"column:id;primaryKey" json:"id,string"`  // 主键ID
 	RowVersion  int64          `gorm:"column:row_version" json:"rowVersion"`   // 乐观锁版本
-	Creator     string         `gorm:"column:creator" json:"creator"`          // 创建人
+	Creator     *string        `gorm:"column:creator" json:"creator"`          // 创建人
 	GmtCreate   DateTime       `gorm:"column:gmt_create" json:"gmtCreate"`     // 创建时间
-	Operator    string         `gorm:"column:operator" json:"operator"`        // 更新人
+	Operator    *string        `gorm:"column:operator" json:"operator"`        // 更新人
 	GmtModified DateTime       `gorm:"column:gmt_modified" json:"gmtModified"` // 更新时间
-	ExtAtt      string         `gorm:"column:ext_att" json:"extAtt"`           // 附加字段
+	ExtAtt      *string        `gorm:"column:ext_att" json:"extAtt"`           // 附加字段
 	RowStatus   gorm.DeletedAt `gorm:"column:row_status" json:"rowStatus"`     // 行状态
-	TenantID    string         `gorm:"column:tenant_id" json:"tenantId"`       // 租户号
+	TenantID    *string        `gorm:"column:tenant_id" json:"tenantId"`       // 租户号
 }
 
 // TableName 返回表名前缀，子类需要重写此方法
@@ -90,11 +90,11 @@ func (b *BaseDO) GetRowVersion() *int64 {
 	return &b.RowVersion
 }
 
-func (b *BaseDO) SetCreator(creator string) {
+func (b *BaseDO) SetCreator(creator *string) {
 	b.Creator = creator
 }
 
-func (b *BaseDO) GetCreator() string {
+func (b *BaseDO) GetCreator() *string {
 	return b.Creator
 }
 
@@ -106,11 +106,11 @@ func (b *BaseDO) GetGmtCreate() DateTime {
 	return b.GmtCreate
 }
 
-func (b *BaseDO) SetOperator(operator string) {
+func (b *BaseDO) SetOperator(operator *string) {
 	b.Operator = operator
 }
 
-func (b *BaseDO) GetOperator() string {
+func (b *BaseDO) GetOperator() *string {
 	return b.Operator
 }
 
@@ -122,10 +122,10 @@ func (b *BaseDO) GetGmtModified() DateTime {
 	return b.GmtModified
 }
 
-func (b *BaseDO) SetTenantId(tenantId string) {
+func (b *BaseDO) SetTenantId(tenantId *string) {
 	b.TenantID = tenantId
 }
-func (b *BaseDO) GetTenantId() string {
+func (b *BaseDO) GetTenantId() *string {
 	return b.TenantID
 }
 
@@ -137,10 +137,10 @@ func (b *BaseDO) GetRowStatus() gorm.DeletedAt {
 	return b.RowStatus
 }
 
-func (b *BaseDO) GetExtAtt() string {
+func (b *BaseDO) GetExtAtt() *string {
 	return b.ExtAtt
 }
 
-func (b *BaseDO) SetExtAtt(extAtt string) {
+func (b *BaseDO) SetExtAtt(extAtt *string) {
 	b.ExtAtt = extAtt
 }

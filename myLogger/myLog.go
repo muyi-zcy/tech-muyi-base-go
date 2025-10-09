@@ -12,13 +12,13 @@ func addTraceIdToFields(ctx context.Context, fields ...zap.Field) []zap.Field {
 	traceId := myContext.GetTraceId(ctx)
 
 	// 如果traceId不为空，添加到字段中
-	if traceId != "" {
-		fields = append(fields, zap.String(myContext.TraceId, traceId))
+	if traceId != nil {
+		fields = append(fields, zap.String(myContext.TraceId, *traceId))
 	}
 
 	ssoId := myContext.GetSsoId(ctx)
-	if ssoId != "" {
-		fields = append(fields, zap.String(myContext.SsoId, ssoId))
+	if ssoId != nil {
+		fields = append(fields, zap.String(myContext.SsoId, *ssoId))
 	}
 
 	return fields
