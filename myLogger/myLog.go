@@ -9,18 +9,16 @@ import (
 // addTraceIdToFields 自动从context中获取traceId并添加到日志字段中
 func addTraceIdToFields(ctx context.Context, fields ...zap.Field) []zap.Field {
 	// 获取traceId
-	traceId := myContext.GetTraceId(ctx)
-
+	traceId, traceErr := myContext.GetTraceId(ctx)
 	// 如果traceId不为空，添加到字段中
-	if traceId != nil {
-		fields = append(fields, zap.String(myContext.TraceId, *traceId))
+	if traceErr != nil {
+		fields = append(fields, zap.String(myContext.TraceId, traceId))
 	}
 
-	ssoId := myContext.GetSsoId(ctx)
-	if ssoId != nil {
-		fields = append(fields, zap.String(myContext.SsoId, *ssoId))
+	ssoId, ssoIdErr := myContext.GetSsoId(ctx)
+	if ssoIdErr != nil {
+		fields = append(fields, zap.String(myContext.SsoId, ssoId))
 	}
-
 	return fields
 }
 
