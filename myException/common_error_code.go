@@ -88,6 +88,7 @@ const (
 
 	// 6XX 未知错误
 	UNKNOWN_EXCEPTION
+	NOT_FOUND_TRACE
 
 	// 10000+ 系统级错误
 	INVALID_PARAM
@@ -187,6 +188,7 @@ var errorCodeMap = map[CommonErrorCodeEnum]ErrorCode{
 
 	// 6XX 未知错误
 	UNKNOWN_EXCEPTION: {"600", "天啦噜~我好像出错了_(:3 」∠ )_"},
+	NOT_FOUND_TRACE:   {"700", "Not Found Trace"},
 
 	// 10000+ 系统级错误
 	INVALID_PARAM:        {"10000", "Invalid Param"},

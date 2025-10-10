@@ -15,15 +15,15 @@ func (e *MyException) Error() string {
 }
 
 // NewBusinessError 创建业务异常
-func NewMyException(code string, message string) *MyException {
+func NewException(code string, message string) *MyException {
 	return &MyException{
 		Code:    code,
 		Message: message,
 	}
 }
 
-// NewBusinessErrorFromCode 从错误码创建业务异常
-func NewBusinessErrorFromCode(errorCode CommonErrorCodeEnum) *MyException {
+// NewExceptionFromError 从错误码创建业务异常
+func NewExceptionFromError(errorCode CommonErrorCodeEnum) *MyException {
 	return &MyException{
 		Code:    errorCode.GetResultCode(),
 		Message: errorCode.GetResultMsg(),

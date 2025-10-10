@@ -85,8 +85,11 @@ func (r *baseRepository) Insert(ctx context.Context, entity interface{}) error {
 	}
 
 	if baseDO, ok := entity.(interface{ SetCreator(creator *string) }); ok {
-		creator := myContext.GetSsoId(ctx)
-		baseDO.SetCreator(creator)
+		creator, ssoIdErr := myContext.GetSsoId(ctx)
+		if ssoIdErr != nil {
+			return ssoIdErr
+		}
+		baseDO.SetCreator(&creator)
 	}
 
 	if baseDO, ok := entity.(interface{ SetGmtCreate(time model.DateTime) }); ok {
@@ -125,8 +128,11 @@ func (r *baseRepository) Update(ctx context.Context, entity interface{}, id inte
 
 	// 2. 自动填充公共字段
 	if baseDO, ok := entity.(interface{ SetOperator(operator *string) }); ok {
-		operator := myContext.GetSsoId(ctx)
-		baseDO.SetOperator(operator)
+		operator, ssoIdErr := myContext.GetSsoId(ctx)
+		if ssoIdErr != nil {
+			return ssoIdErr
+		}
+		baseDO.SetOperator(&operator)
 	}
 
 	if baseDO, ok := entity.(interface{ SetGmtModified(time model.DateTime) }); ok {

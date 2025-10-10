@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/muyi-zcy/tech-muyi-base-go/myException"
 )
 
 const (
@@ -116,17 +117,30 @@ func ssoIdFromContext(ctx context.Context) string {
 }
 
 // GetTraceIdFromContext 从context中获取traceId的便捷方法
-func GetTraceId(ctx context.Context) *string {
+func GetTraceId(ctx context.Context) (string, error) {
+	if ctx == nil {
+		return "", myException.NewExceptionFromError(myException.UNAUTHORIZED)
+	}
+
 	result := traceIdFromContext(ctx)
 	if result == "" {
-		return nil
+		return "", myException.NewExceptionFromError(myException.UNAUTHORIZED)
 	}
-	return &result
+
+	return result, nil
 }
-func GetSsoId(ctx context.Context) *string {
+
+// GetSsoId 获取ssoId并进行非空验证，返回ssoId和异常
+func GetSsoId(ctx context.Context) (string, error) {
+	// 非空判断
+	if ctx == nil {
+		return "", myException.NewExceptionFromError(myException.UNAUTHORIZED)
+	}
+
 	result := ssoIdFromContext(ctx)
 	if result == "" {
-		return nil
+		return "", myException.NewExceptionFromError(myException.UNAUTHORIZED)
 	}
-	return &result
+
+	return result, nil
 }
