@@ -168,13 +168,17 @@ func (r *baseRepository) DeleteById(ctx context.Context, entity interface{}, id 
 	if err != nil {
 		return err
 	}
+	operator, ssoIdErr := myContext.GetSsoId(ctx)
+	if ssoIdErr != nil {
+		return ssoIdErr
+	}
 
 	// 直接根据ID更新，不需要先查询
 	return db.WithContext(ctx).Model(entity).
 		Where("id = ?", id).
 		Updates(map[string]interface{}{
 			model.ROW_STATUS:  model.IS_DELETED,
-			model.OPERATOR:    myContext.GetSsoId(ctx),
+			model.OPERATOR:    operator,
 			model.GMTMODIFIED: time.Now(),
 		}).Error
 }
@@ -186,8 +190,8 @@ func (r *baseRepository) GetById(ctx context.Context, entity interface{}, id int
 		return err
 	}
 
-	// 执行查询
-	result := db.WithContext(ctx).First(entity, id)
+	// 执行查询，默认包含 ROW_STATUS=0 条件
+	result := db.WithContext(ctx).Where(model.ROW_STATUS+" = ?", 0).First(entity, id)
 
 	return result.Error
 }
@@ -199,7 +203,8 @@ func (r *baseRepository) GetAll(ctx context.Context, entity interface{}) error {
 		return err
 	}
 
-	return db.WithContext(ctx).Find(entity).Error
+	// 默认包含 ROW_STATUS=0 条件
+	return db.WithContext(ctx).Where(model.ROW_STATUS+" = ?", 0).Find(entity).Error
 }
 
 // GetByCondition 根据条件查询数据
@@ -209,7 +214,12 @@ func (r *baseRepository) GetByCondition(ctx context.Context, entity interface{},
 		return err
 	}
 
-	return db.WithContext(ctx).Where(conditions).Find(entity).Error
+	// 默认包含 ROW_STATUS=0 条件
+	dbModel := db.WithContext(ctx).Where(model.ROW_STATUS+" = ?", 0)
+	for key, value := range conditions {
+		dbModel = dbModel.Where(key, value)
+	}
+	return dbModel.Find(entity).Error
 }
 
 // CountByCondition 根据条件查询总数
@@ -220,7 +230,8 @@ func (r *baseRepository) CountByCondition(ctx context.Context, entity interface{
 	}
 
 	var total int64
-	dbModel := db.WithContext(ctx).Model(entity)
+	// 默认包含 ROW_STATUS=0 条件
+	dbModel := db.WithContext(ctx).Model(entity).Where(model.ROW_STATUS+" = ?", 0)
 	for key, value := range conditions {
 		dbModel = dbModel.Where(key, value)
 	}
@@ -240,8 +251,8 @@ func (r *baseRepository) GetPageByCondition(ctx context.Context, entity interfac
 
 	var total int64
 
-	// 计算总数
-	dbModel := db.WithContext(ctx).Model(entity)
+	// 计算总数，默认包含 ROW_STATUS=0 条件
+	dbModel := db.WithContext(ctx).Model(entity).Where(model.ROW_STATUS+" = ?", 0)
 	for key, value := range conditions {
 		dbModel = dbModel.Where(key, value)
 	}
@@ -249,10 +260,10 @@ func (r *baseRepository) GetPageByCondition(ctx context.Context, entity interfac
 		return err
 	}
 
-	// 分页查询
+	// 分页查询，默认包含 ROW_STATUS=0 条件
 	pageSize := query.GetSize()
 	offset := query.GetOffset()
-	dbQuery := db.WithContext(ctx)
+	dbQuery := db.WithContext(ctx).Where(model.ROW_STATUS+" = ?", 0)
 	for key, value := range conditions {
 		dbQuery = dbQuery.Where(key, value)
 	}

@@ -3,7 +3,6 @@ package model
 import (
 	"database/sql/driver"
 	"fmt"
-	"gorm.io/gorm"
 	"strings"
 	"time"
 )
@@ -59,15 +58,15 @@ func (t *DateTime) Scan(value interface{}) error {
 // BaseDO 数据库实体的公共字段基础结构体
 // 所有数据库实体都应该继承这个结构体
 type BaseDO struct {
-	Id          int64          `gorm:"column:id;primaryKey" json:"id,string"`  // 主键ID
-	RowVersion  int64          `gorm:"column:row_version" json:"rowVersion"`   // 乐观锁版本
-	Creator     *string        `gorm:"column:creator" json:"creator"`          // 创建人
-	GmtCreate   DateTime       `gorm:"column:gmt_create" json:"gmtCreate"`     // 创建时间
-	Operator    *string        `gorm:"column:operator" json:"operator"`        // 更新人
-	GmtModified DateTime       `gorm:"column:gmt_modified" json:"gmtModified"` // 更新时间
-	ExtAtt      *string        `gorm:"column:ext_att" json:"extAtt"`           // 附加字段
-	RowStatus   gorm.DeletedAt `gorm:"column:row_status" json:"rowStatus"`     // 行状态
-	TenantID    *string        `gorm:"column:tenant_id" json:"tenantId"`       // 租户号
+	Id          int64    `gorm:"column:id;primaryKey" json:"id,string"`  // 主键ID
+	RowVersion  int64    `gorm:"column:row_version" json:"rowVersion"`   // 乐观锁版本
+	Creator     *string  `gorm:"column:creator" json:"creator"`          // 创建人
+	GmtCreate   DateTime `gorm:"column:gmt_create" json:"gmtCreate"`     // 创建时间
+	Operator    *string  `gorm:"column:operator" json:"operator"`        // 更新人
+	GmtModified DateTime `gorm:"column:gmt_modified" json:"gmtModified"` // 更新时间
+	ExtAtt      *string  `gorm:"column:ext_att" json:"extAtt"`           // 附加字段
+	RowStatus   int      `gorm:"column:row_status" json:"rowStatus"`     // 行状态
+	TenantID    *string  `gorm:"column:tenant_id" json:"tenantId"`       // 租户号
 }
 
 // TableName 返回表名前缀，子类需要重写此方法
@@ -129,11 +128,11 @@ func (b *BaseDO) GetTenantId() *string {
 	return b.TenantID
 }
 
-func (b *BaseDO) SetRowStatus(rowStatus gorm.DeletedAt) {
+func (b *BaseDO) SetRowStatus(rowStatus int) {
 	b.RowStatus = rowStatus
 }
 
-func (b *BaseDO) GetRowStatus() gorm.DeletedAt {
+func (b *BaseDO) GetRowStatus() int {
 	return b.RowStatus
 }
 
