@@ -11,6 +11,9 @@ const (
 	TraceId    = "traceId"
 	SsoId      = "ssoId"
 	SsoVersion = "ssoVersion"
+
+	xTraceId = "x-trace-id"
+	xSsoId   = "x-sso-id"
 )
 
 // GetTraceId 从Gin上下文获取traceId
@@ -23,14 +26,14 @@ func GetTraceIdFromGinCtx(c *gin.Context) string {
 	}
 
 	// 从请求头获取
-	traceId := c.GetHeader("X-Trace-ID")
+	traceId := c.GetHeader(xTraceId)
 	if traceId != "" {
 		c.Set(string(TraceId), traceId)
 		return traceId
 	}
 
 	// 从Cookie获取
-	traceId, _ = c.Cookie("X-Trace-ID")
+	traceId, _ = c.Cookie(xTraceId)
 	if traceId != "" {
 		c.Set(string(TraceId), traceId)
 		return traceId
@@ -39,7 +42,7 @@ func GetTraceIdFromGinCtx(c *gin.Context) string {
 	// 都没有则生成新的UUID
 	newTraceId := uuid.New().String()
 	c.Set(string(TraceId), newTraceId)
-	c.Header("X-Trace-ID", newTraceId) // 设置响应头
+	c.Header(xTraceId, newTraceId) // 设置响应头
 	return newTraceId
 }
 
@@ -52,14 +55,14 @@ func GetSsoIdFromGinCtx(c *gin.Context) string {
 	}
 
 	// 从请求头获取
-	ssoId := c.GetHeader("X-Sso-ID")
+	ssoId := c.GetHeader(xSsoId)
 	if ssoId != "" {
 		c.Set(string(SsoId), ssoId)
 		return ssoId
 	}
 
 	// 从Cookie获取
-	ssoId, _ = c.Cookie("X-Sso-ID")
+	ssoId, _ = c.Cookie(xSsoId)
 	if ssoId != "" {
 		c.Set(string(SsoId), ssoId)
 		return ssoId
@@ -68,7 +71,7 @@ func GetSsoIdFromGinCtx(c *gin.Context) string {
 	// 都没有则生成新的UUID
 	newSsoId := "-1"
 	c.Set(string(SsoId), newSsoId)
-	c.Header("X-Sso-ID", newSsoId) // 设置响应头
+	c.Header(xSsoId, newSsoId) // 设置响应头
 	return newSsoId
 }
 

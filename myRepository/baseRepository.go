@@ -10,8 +10,53 @@ import (
 	"github.com/muyi-zcy/tech-muyi-base-go/myId"
 	"github.com/muyi-zcy/tech-muyi-base-go/myResult"
 	"gorm.io/gorm"
+	"strings"
 	"time"
 )
+
+// SortOrder 排序规则枚举
+type SortOrder string
+
+const (
+	ASC  SortOrder = "ASC"  // 升序
+	DESC SortOrder = "DESC" // 降序
+)
+
+// SortField 排序字段结构
+type SortField struct {
+	Field string    `json:"field"` // 字段名
+	Order SortOrder `json:"order"` // 排序规则
+}
+
+// SortFields 多字段排序结构
+type SortFields []SortField
+
+// IsEmpty 判断排序字段是否为空
+func (sf SortFields) IsEmpty() bool {
+	return len(sf) == 0
+}
+
+// ToOrderClause 转换为GORM的Order子句
+func (sf SortFields) ToOrderClause() string {
+	if sf.IsEmpty() {
+		return ""
+	}
+
+	var orderClauses []string
+	for _, sortField := range sf {
+		if sortField.Field != "" {
+			orderClause := sortField.Field
+			if sortField.Order != "" {
+				orderClause += " " + string(sortField.Order)
+			} else {
+				orderClause += " " + string(ASC) // 默认升序
+			}
+			orderClauses = append(orderClauses, orderClause)
+		}
+	}
+
+	return strings.Join(orderClauses, ", ")
+}
 
 // BaseRepository 基础仓库接口
 type BaseRepository interface {
@@ -28,13 +73,13 @@ type BaseRepository interface {
 	GetById(ctx context.Context, entity interface{}, id interface{}) error
 
 	// GetAll 获取所有数据
-	GetAll(ctx context.Context, entity interface{}) error
+	GetAll(ctx context.Context, entity interface{}, sortFields ...SortFields) error
 
 	// GetByCondition 根据条件查询数据
-	GetByCondition(ctx context.Context, entity interface{}, conditions map[string]interface{}) error
+	GetByCondition(ctx context.Context, entity interface{}, conditions map[string]interface{}, sortFields ...SortFields) error
 
 	// GetPageByCondition 根据条件分页查询数据
-	GetPageByCondition(ctx context.Context, entity interface{}, conditions map[string]interface{}, query *myResult.MyQuery) error
+	GetPageByCondition(ctx context.Context, entity interface{}, conditions map[string]interface{}, query *myResult.MyQuery, sortFields ...SortFields) error
 
 	// CountByCondition 根据条件查询总数
 	CountByCondition(ctx context.Context, entity interface{}, conditions map[string]interface{}) (int64, error)
@@ -197,18 +242,28 @@ func (r *baseRepository) GetById(ctx context.Context, entity interface{}, id int
 }
 
 // GetAll 获取所有数据
-func (r *baseRepository) GetAll(ctx context.Context, entity interface{}) error {
+func (r *baseRepository) GetAll(ctx context.Context, entity interface{}, sortFields ...SortFields) error {
 	db, err := r.getDB()
 	if err != nil {
 		return err
 	}
 
 	// 默认包含 ROW_STATUS=0 条件
-	return db.WithContext(ctx).Where(model.ROW_STATUS+" = ?", 0).Find(entity).Error
+	dbModel := db.WithContext(ctx).Where(model.ROW_STATUS+" = ?", 0)
+
+	// 应用排序
+	if len(sortFields) > 0 && !sortFields[0].IsEmpty() {
+		orderClause := sortFields[0].ToOrderClause()
+		if orderClause != "" {
+			dbModel = dbModel.Order(orderClause)
+		}
+	}
+
+	return dbModel.Find(entity).Error
 }
 
 // GetByCondition 根据条件查询数据
-func (r *baseRepository) GetByCondition(ctx context.Context, entity interface{}, conditions map[string]interface{}) error {
+func (r *baseRepository) GetByCondition(ctx context.Context, entity interface{}, conditions map[string]interface{}, sortFields ...SortFields) error {
 	db, err := r.getDB()
 	if err != nil {
 		return err
@@ -219,6 +274,15 @@ func (r *baseRepository) GetByCondition(ctx context.Context, entity interface{},
 	for key, value := range conditions {
 		dbModel = dbModel.Where(key, value)
 	}
+
+	// 应用排序
+	if len(sortFields) > 0 && !sortFields[0].IsEmpty() {
+		orderClause := sortFields[0].ToOrderClause()
+		if orderClause != "" {
+			dbModel = dbModel.Order(orderClause)
+		}
+	}
+
 	return dbModel.Find(entity).Error
 }
 
@@ -243,7 +307,7 @@ func (r *baseRepository) CountByCondition(ctx context.Context, entity interface{
 }
 
 // GetPageByCondition 根据条件分页查询数据
-func (r *baseRepository) GetPageByCondition(ctx context.Context, entity interface{}, conditions map[string]interface{}, query *myResult.MyQuery) error {
+func (r *baseRepository) GetPageByCondition(ctx context.Context, entity interface{}, conditions map[string]interface{}, query *myResult.MyQuery, sortFields ...SortFields) error {
 	db, err := r.getDB()
 	if err != nil {
 		return err
@@ -267,6 +331,15 @@ func (r *baseRepository) GetPageByCondition(ctx context.Context, entity interfac
 	for key, value := range conditions {
 		dbQuery = dbQuery.Where(key, value)
 	}
+
+	// 应用排序
+	if len(sortFields) > 0 && !sortFields[0].IsEmpty() {
+		orderClause := sortFields[0].ToOrderClause()
+		if orderClause != "" {
+			dbQuery = dbQuery.Order(orderClause)
+		}
+	}
+
 	query.SetTotal(total)
 	if err := dbQuery.Offset(offset).Limit(pageSize).Find(entity).Error; err != nil {
 		return err

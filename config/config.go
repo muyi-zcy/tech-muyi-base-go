@@ -204,7 +204,6 @@ func setDefaultConfig() {
 	viper.SetDefault("log.stdout", false)  // 默认不启用控制台输出
 	viper.SetDefault("log.log_sql", false) // 默认不记录SQL日志
 	viper.SetDefault("log.enable_trace_id", false)
-	viper.SetDefault("log.trace_id_key", "X-Trace-Id")
 	viper.SetDefault("database.driver", "mysql")
 	viper.SetDefault("database.host", "localhost")
 	viper.SetDefault("database.port", 3306)
