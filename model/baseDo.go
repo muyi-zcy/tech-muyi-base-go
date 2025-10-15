@@ -55,6 +55,11 @@ func (t *DateTime) Scan(value interface{}) error {
 	return fmt.Errorf("cannot scan %v into DateTime", value)
 }
 
+// Now 获取当前时间，精确到秒
+func Now() DateTime {
+	return DateTime(time.Now().Truncate(time.Second))
+}
+
 // BaseDO 数据库实体的公共字段基础结构体
 // 所有数据库实体都应该继承这个结构体
 type BaseDO struct {

@@ -10,7 +10,6 @@ import (
 	"github.com/muyi-zcy/tech-muyi-base-go/myResult"
 	"gorm.io/gorm"
 	"strings"
-	"time"
 )
 
 // SortOrder 排序规则枚举
@@ -171,12 +170,13 @@ func (r *baseRepository) DeleteById(ctx context.Context, entity interface{}, id 
 	}
 
 	// 直接根据ID更新，不需要先查询
+	// 时间精确到秒
 	return db.WithContext(ctx).Model(entity).
 		Where("id = ?", id).
 		Updates(map[string]interface{}{
 			model.ROW_STATUS:  model.IS_DELETED,
 			model.OPERATOR:    operator,
-			model.GMTMODIFIED: time.Now(),
+			model.GMTMODIFIED: model.Now(),
 		}).Error
 }
 
