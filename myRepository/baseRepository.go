@@ -7,7 +7,6 @@ import (
 	"github.com/muyi-zcy/tech-muyi-base-go/infrastructure"
 	"github.com/muyi-zcy/tech-muyi-base-go/model"
 	"github.com/muyi-zcy/tech-muyi-base-go/myContext"
-	"github.com/muyi-zcy/tech-muyi-base-go/myId"
 	"github.com/muyi-zcy/tech-muyi-base-go/myResult"
 	"gorm.io/gorm"
 	"strings"
@@ -60,6 +59,9 @@ func (sf SortFields) ToOrderClause() string {
 
 // BaseRepository 基础仓库接口
 type BaseRepository interface {
+	// GetDB 获取数据库连接，确保连接有效
+	GetDB() (*gorm.DB, error)
+
 	// Insert 插入数据
 	Insert(ctx context.Context, entity interface{}) error
 
@@ -97,7 +99,7 @@ func NewBaseRepository() BaseRepository {
 	}
 }
 
-// getDB 获取数据库连接，确保连接有效
+// getDB 获取数据库连接，确保连接有效（私有方法）
 func (r *baseRepository) getDB() (*gorm.DB, error) {
 	// 如果db为nil，尝试重新获取
 	if r.db == nil {
@@ -112,6 +114,11 @@ func (r *baseRepository) getDB() (*gorm.DB, error) {
 	return r.db, nil
 }
 
+// GetDB 获取数据库连接，确保连接有效（公开方法，供子类使用）
+func (r *baseRepository) GetDB() (*gorm.DB, error) {
+	return r.getDB()
+}
+
 // Insert 插入数据
 func (r *baseRepository) Insert(ctx context.Context, entity interface{}) error {
 	db, err := r.getDB()
@@ -119,43 +126,8 @@ func (r *baseRepository) Insert(ctx context.Context, entity interface{}) error {
 		return err
 	}
 
-	// 如果是BaseDO类型，自动填充创建字段
-
-	if baseDO, ok := entity.(interface{ SetId(id *int64) }); ok {
-		id, err := myId.NextId()
-		if err != nil {
-			return err
-		}
-		baseDO.SetId(&id)
-	}
-
-	if baseDO, ok := entity.(interface{ SetCreator(creator *string) }); ok {
-		creator, ssoIdErr := myContext.GetSsoId(ctx)
-		if ssoIdErr != nil {
-			return ssoIdErr
-		}
-		baseDO.SetCreator(&creator)
-	}
-
-	if baseDO, ok := entity.(interface{ SetGmtCreate(time model.DateTime) }); ok {
-		baseDO.SetGmtCreate(model.DateTime(time.Now()))
-	}
-
-	if baseDO, ok := entity.(interface{ SetGmtModified(time model.DateTime) }); ok {
-		baseDO.SetGmtModified(model.DateTime(time.Now()))
-	}
-
-	// 如果是BaseDO类型，设置默认行状态
-	if baseDO, ok := entity.(interface{ SetRowStatus(status *int64) }); ok {
-		status := int64(0)
-		baseDO.SetRowStatus(&status)
-	}
-
-	// 设置乐观锁版本
-	if baseDO, ok := entity.(interface{ SetRowVersion(version *int64) }); ok {
-		version := int64(0)
-		baseDO.SetRowVersion(&version)
-	}
+	// BaseDO字段的自动设置由GORM Hook处理
+	// Hook会自动设置: Id, Creator, GmtCreate, RowVersion, RowStatus
 	return db.WithContext(ctx).Create(entity).Error
 }
 
@@ -171,30 +143,10 @@ func (r *baseRepository) Update(ctx context.Context, entity interface{}, id inte
 		return errors.New("update failed: id is required")
 	}
 
-	// 2. 自动填充公共字段
-	if baseDO, ok := entity.(interface{ SetOperator(operator *string) }); ok {
-		operator, ssoIdErr := myContext.GetSsoId(ctx)
-		if ssoIdErr != nil {
-			return ssoIdErr
-		}
-		baseDO.SetOperator(&operator)
-	}
+	// BaseDO字段的自动设置由GORM Hook处理
+	// Hook会自动设置: Operator, GmtModified, RowVersion(乐观锁)
 
-	if baseDO, ok := entity.(interface{ SetGmtModified(time model.DateTime) }); ok {
-		baseDO.SetGmtModified(model.DateTime(time.Now()))
-	}
-
-	// 3. 增加乐观锁版本
-	if baseDO, ok := entity.(interface{ GetRowVersion() *int64 }); ok {
-		if version := baseDO.GetRowVersion(); version != nil {
-			newVersion := *version + 1
-			if setter, ok := entity.(interface{ SetRowVersion(version *int64) }); ok {
-				setter.SetRowVersion(&newVersion)
-			}
-		}
-	}
-
-	// 4. 执行更新（只更新 entity 非零值字段）
+	// 2. 执行更新（只更新 entity 非零值字段）
 	result := db.WithContext(ctx).
 		Model(entity).
 		Where("id = ?", id).

@@ -110,6 +110,11 @@ func InitDatabase() error {
 		return fmt.Errorf("数据库连接测试失败: %v", err)
 	}
 
+	// 注册BaseDO的GORM Hooks
+	if err := RegisterBaseDOHooks(DB); err != nil {
+		return fmt.Errorf("注册GORM Hooks失败: %v", err)
+	}
+
 	myLogger.Info("GORM数据库连接初始化成功")
 	return nil
 }
