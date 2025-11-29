@@ -106,8 +106,8 @@ func (s *Starter) RegisterDefaultMiddlewares() {
 	// 异常处理中间件
 	s.Engine.Use(middleware.ExceptionHandler())
 
-	// Gin恢复中间件
-	s.Engine.Use(gin.Recovery())
+	//Gin恢复中间件
+	//s.Engine.Use(gin.Recovery())
 
 	// 日志中间件（必须在上下文中间件之后）
 	s.Engine.Use(middleware.Logger())

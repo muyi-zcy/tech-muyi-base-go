@@ -272,7 +272,7 @@ func ErrorWithCode(c *gin.Context, code string, message string) {
 
 // ErrorWithError 错误响应带异常对象
 func ErrorWithError(c *gin.Context, err error) {
-	JSON(c, FailWithError(err))
+	c.Error(err)
 }
 
 // BadRequestResponse 400错误响应
