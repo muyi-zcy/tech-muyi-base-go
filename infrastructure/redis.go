@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/muyi-zcy/tech-muyi-base-go/config"
 	"github.com/muyi-zcy/tech-muyi-base-go/myLogger"
+	"github.com/pkg/errors"
 
 	"github.com/go-redis/redis/v8"
 	"go.uber.org/zap"
@@ -25,7 +26,7 @@ func InitRedis() error {
 
 	// 检查配置是否正确加载
 	if redisConfig.Host == "" {
-		return fmt.Errorf("Redis配置未正确加载")
+		return errors.New("Redis配置未正确加载")
 	}
 
 	myLogger.Info("Redis配置",
@@ -60,7 +61,7 @@ func InitRedis() error {
 	// 测试连接
 	_, err := RedisClient.Ping(ctx).Result()
 	if err != nil {
-		return fmt.Errorf("Redis连接测试失败: %v", err)
+		return errors.Wrap(err, "Redis连接测试失败")
 	}
 
 	return nil

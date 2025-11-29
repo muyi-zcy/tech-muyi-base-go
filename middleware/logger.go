@@ -60,17 +60,5 @@ func Logger() gin.HandlerFunc {
 			zap.Int64("durationMs", duration.Milliseconds()),
 			zap.Int64("durationMicroseconds", duration.Microseconds()),
 		)
-
-		// 记录错误信息（如果有）
-		if len(c.Errors) > 0 {
-			// 将errorMsgs转换为[]error
-			var errors []error
-			for _, err := range c.Errors {
-				errors = append(errors, err.Err)
-			}
-			myLogger.ErrorCtx(c.Request.Context(), "HTTP Errors",
-				zap.Errors("errors", errors),
-			)
-		}
 	}
 }

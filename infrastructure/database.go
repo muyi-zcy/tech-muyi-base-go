@@ -8,6 +8,7 @@ import (
 
 	"github.com/muyi-zcy/tech-muyi-base-go/config"
 	"github.com/muyi-zcy/tech-muyi-base-go/myLogger"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -27,7 +28,7 @@ func InitDatabase() error {
 
 	// 检查配置是否正确加载
 	if dbConfig.Host == "" {
-		return fmt.Errorf("数据库配置未正确加载")
+		return errors.New("数据库配置未正确加载")
 	}
 
 	// 构建数据库连接字符串
@@ -49,7 +50,7 @@ func InitDatabase() error {
 		}
 		dsn = fmt.Sprintf("%s?%s", base, params)
 	default:
-		return fmt.Errorf("不支持的数据库驱动: %s", dbConfig.Driver)
+		return errors.Errorf("不支持的数据库驱动: %s", dbConfig.Driver)
 	}
 
 	// 配置GORM日志
@@ -72,13 +73,13 @@ func InitDatabase() error {
 	var err error
 	DB, err = gorm.Open(mysql.Open(dsn), gormConfig)
 	if err != nil {
-		return fmt.Errorf("打开数据库连接失败: %v", err)
+		return errors.Wrap(err, "打开数据库连接失败")
 	}
 
 	// 获取通用数据库对象 sql.DB 以配置连接池
 	sqlDB, err = DB.DB()
 	if err != nil {
-		return fmt.Errorf("获取数据库对象失败: %v", err)
+		return errors.Wrap(err, "获取数据库对象失败")
 	}
 
 	// 设置连接池参数 - 从配置中读取
@@ -107,12 +108,12 @@ func InitDatabase() error {
 	defer cancel()
 
 	if err = sqlDB.PingContext(ctx); err != nil {
-		return fmt.Errorf("数据库连接测试失败: %v", err)
+		return errors.Wrap(err, "数据库连接测试失败")
 	}
 
 	// 注册BaseDO的GORM Hooks
 	if err := RegisterBaseDOHooks(DB); err != nil {
-		return fmt.Errorf("注册GORM Hooks失败: %v", err)
+		return errors.Wrap(err, "注册GORM Hooks失败")
 	}
 
 	myLogger.Info("GORM数据库连接初始化成功")

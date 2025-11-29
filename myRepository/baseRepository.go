@@ -2,12 +2,11 @@ package myRepository
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"github.com/muyi-zcy/tech-muyi-base-go/infrastructure"
 	"github.com/muyi-zcy/tech-muyi-base-go/model"
 	"github.com/muyi-zcy/tech-muyi-base-go/myContext"
 	"github.com/muyi-zcy/tech-muyi-base-go/myResult"
+	"github.com/pkg/errors"
 	"gorm.io/gorm"
 	"strings"
 )
@@ -107,7 +106,7 @@ func (r *baseRepository) getDB() (*gorm.DB, error) {
 
 	// 如果仍然为nil，返回错误
 	if r.db == nil {
-		return nil, fmt.Errorf("数据库连接未初始化")
+		return nil, errors.New("数据库连接未初始化")
 	}
 
 	return r.db, nil
@@ -127,7 +126,10 @@ func (r *baseRepository) Insert(ctx context.Context, entity interface{}) error {
 
 	// BaseDO字段的自动设置由GORM Hook处理
 	// Hook会自动设置: Id, Creator, GmtCreate, RowVersion, RowStatus
-	return db.WithContext(ctx).Create(entity).Error
+	if err := db.WithContext(ctx).Create(entity).Error; err != nil {
+		return errors.Wrap(err, "插入数据失败")
+	}
+	return nil
 }
 
 // Update 更新数据
@@ -152,7 +154,7 @@ func (r *baseRepository) Update(ctx context.Context, entity interface{}, id inte
 		Updates(entity)
 
 	if result.Error != nil {
-		return result.Error
+		return errors.Wrap(result.Error, "更新数据失败")
 	}
 
 	return nil
@@ -171,13 +173,16 @@ func (r *baseRepository) DeleteById(ctx context.Context, entity interface{}, id 
 
 	// 直接根据ID更新，不需要先查询
 	// 时间精确到秒
-	return db.WithContext(ctx).Model(entity).
+	if err := db.WithContext(ctx).Model(entity).
 		Where("id = ?", id).
 		Updates(map[string]interface{}{
 			model.ROW_STATUS:  model.IS_DELETED,
 			model.OPERATOR:    operator,
 			model.GMTMODIFIED: model.Now(),
-		}).Error
+		}).Error; err != nil {
+		return errors.Wrap(err, "删除数据失败")
+	}
+	return nil
 }
 
 // GetById 根据ID获取数据
@@ -190,7 +195,10 @@ func (r *baseRepository) GetById(ctx context.Context, entity interface{}, id int
 	// 执行查询，默认包含 ROW_STATUS=0 条件
 	result := db.WithContext(ctx).Where(model.ROW_STATUS+" = ?", 0).First(entity, id)
 
-	return result.Error
+	if result.Error != nil {
+		return errors.Wrap(result.Error, "根据ID获取数据失败")
+	}
+	return nil
 }
 
 // GetAll 获取所有数据
@@ -211,7 +219,10 @@ func (r *baseRepository) GetAll(ctx context.Context, entity interface{}, sortFie
 		}
 	}
 
-	return dbModel.Find(entity).Error
+	if err := dbModel.Find(entity).Error; err != nil {
+		return errors.Wrap(err, "获取所有数据失败")
+	}
+	return nil
 }
 
 // GetByCondition 根据条件查询数据
@@ -235,7 +246,10 @@ func (r *baseRepository) GetByCondition(ctx context.Context, entity interface{},
 		}
 	}
 
-	return dbModel.Find(entity).Error
+	if err := dbModel.Find(entity).Error; err != nil {
+		return errors.Wrap(err, "根据条件查询数据失败")
+	}
+	return nil
 }
 
 // CountByCondition 根据条件查询总数
@@ -252,7 +266,7 @@ func (r *baseRepository) CountByCondition(ctx context.Context, entity interface{
 		dbModel = dbModel.Where(key, value)
 	}
 	if err := dbModel.Count(&total).Error; err != nil {
-		return 0, err
+		return 0, errors.Wrap(err, "根据条件查询总数失败")
 	}
 
 	return total, nil
@@ -273,7 +287,7 @@ func (r *baseRepository) GetPageByCondition(ctx context.Context, entity interfac
 		dbModel = dbModel.Where(key, value)
 	}
 	if err := dbModel.Count(&total).Error; err != nil {
-		return err
+		return errors.Wrap(err, "分页查询计算总数失败")
 	}
 
 	// 分页查询，默认包含 ROW_STATUS=0 条件
@@ -294,7 +308,7 @@ func (r *baseRepository) GetPageByCondition(ctx context.Context, entity interfac
 
 	query.SetTotal(total)
 	if err := dbQuery.Offset(offset).Limit(pageSize).Find(entity).Error; err != nil {
-		return err
+		return errors.Wrap(err, "分页查询数据失败")
 	}
 	return nil
 }

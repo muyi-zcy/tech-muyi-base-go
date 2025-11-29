@@ -1,8 +1,8 @@
 package myId
 
 import (
-	"errors"
 	"fmt"
+	"github.com/pkg/errors"
 	"hash/fnv"
 	"net"
 	"os"

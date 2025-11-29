@@ -5,6 +5,7 @@ import (
 	"github.com/muyi-zcy/tech-muyi-base-go/config"
 	"github.com/muyi-zcy/tech-muyi-base-go/infrastructure"
 	"github.com/muyi-zcy/tech-muyi-base-go/myLogger"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
@@ -94,12 +95,12 @@ func (a *App) Shutdown() error {
 
 	// 关闭数据库连接
 	if err := infrastructure.CloseDB(); err != nil {
-		return fmt.Errorf("关闭数据库连接失败: %v", err)
+		return errors.Wrap(err, "关闭数据库连接失败")
 	}
 
 	// 关闭Redis连接
 	if err := infrastructure.CloseRedis(); err != nil {
-		return fmt.Errorf("关闭Redis连接失败: %v", err)
+		return errors.Wrap(err, "关闭Redis连接失败")
 	}
 
 	return nil

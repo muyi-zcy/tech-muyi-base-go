@@ -7,6 +7,7 @@ import (
 	"github.com/muyi-zcy/tech-muyi-base-go/middleware"
 	"github.com/muyi-zcy/tech-muyi-base-go/myContext"
 	"github.com/muyi-zcy/tech-muyi-base-go/myLogger"
+	"github.com/pkg/errors"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -43,7 +44,7 @@ func Initialize() (*Starter, error) {
 
 	// 初始化启动器
 	if err := starter.Initialize(); err != nil {
-		return nil, fmt.Errorf("初始化启动器失败: %v", err)
+		return nil, errors.Wrap(err, "初始化启动器失败")
 	}
 
 	return starter, nil
@@ -56,7 +57,7 @@ func (s *Starter) Initialize() error {
 
 	// 初始化日志系统
 	if err := s.InitializeLogger(); err != nil {
-		return fmt.Errorf("初始化日志系统失败: %v", err)
+		return errors.Wrap(err, "初始化日志系统失败")
 	}
 
 	// 注册默认中间件
@@ -64,7 +65,7 @@ func (s *Starter) Initialize() error {
 
 	// 根据配置自动注册基础设施
 	if err := s.RegisterInfrastructure(); err != nil {
-		return fmt.Errorf("注册基础设施失败: %v", err)
+		return errors.Wrap(err, "注册基础设施失败")
 	}
 
 	return nil
@@ -126,7 +127,7 @@ func (s *Starter) RegisterInfrastructure() error {
 		myLogger.Info("初始化数据库连接")
 		if err := infrastructure.InitDatabase(); err != nil {
 			myLogger.Error("数据库连接初始化失败", zap.Error(err))
-			return fmt.Errorf("数据库连接初始化失败: %v", err)
+			return errors.Wrap(err, "数据库连接初始化失败")
 		}
 		myLogger.Info("数据库连接初始化成功")
 	}
@@ -136,7 +137,7 @@ func (s *Starter) RegisterInfrastructure() error {
 		myLogger.Info("初始化Redis连接")
 		if err := infrastructure.InitRedis(); err != nil {
 			myLogger.Error("Redis连接初始化失败", zap.Error(err))
-			return fmt.Errorf("Redis连接初始化失败: %v", err)
+			return errors.Wrap(err, "Redis连接初始化失败")
 		}
 		myLogger.Info("Redis连接初始化成功")
 	}
@@ -174,6 +175,10 @@ func (s *Starter) Run() error {
 	// 注册健康检查路由
 	healthController := NewHealthCheckController()
 	RegisterHealthCheckRoutes(s.Engine, healthController)
+
+	// 注册404和405错误处理（必须在所有路由注册之后）
+	s.Engine.NoRoute(middleware.NotFoundHandler())
+	s.Engine.NoMethod(middleware.MethodNotAllowedHandler())
 
 	port := 8080
 	if s.App.Config != nil && s.App.Config.Server.Port > 0 {

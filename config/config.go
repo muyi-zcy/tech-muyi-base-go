@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/fsnotify/fsnotify"
+	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 	"os"
 	"path/filepath"
@@ -140,7 +141,7 @@ func Init() error {
 
 	// 读取配置文件
 	if err := viper.ReadInConfig(); err != nil {
-		return fmt.Errorf("读取配置文件失败: %v", err)
+		return errors.Wrap(err, "读取配置文件失败")
 	}
 
 	// 监听配置文件变化
@@ -159,7 +160,7 @@ func Init() error {
 	// 解析配置到结构体
 	GlobalConfig = &Config{}
 	if err := viper.Unmarshal(GlobalConfig); err != nil {
-		return fmt.Errorf("解析配置失败: %v", err)
+		return errors.Wrap(err, "解析配置失败")
 	}
 
 	fmt.Printf("配置加载成功: %+v\n", GlobalConfig)
@@ -171,7 +172,7 @@ func Init() error {
 func GetConfigByType(configType string, target interface{}) error {
 	// 检查配置是否已初始化
 	if GlobalConfig == nil {
-		return fmt.Errorf("配置未初始化")
+		return errors.New("配置未初始化")
 	}
 
 	// 根据配置类型获取子配置并反序列化到目标结构体

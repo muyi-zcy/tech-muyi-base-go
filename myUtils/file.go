@@ -2,6 +2,7 @@ package myUtils
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"io"
 	"os"
 	"path/filepath"
@@ -239,20 +240,20 @@ func CopyFileWithError(srcFilePath string, destFilePath string) error {
 		err = os.MkdirAll(dirPath, os.ModePerm)
 	}
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	src, err := os.Open(srcFilePath)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	defer func(src *os.File) { _ = src.Close() }(src)
 	dst, err := os.OpenFile(destFilePath, os.O_WRONLY|os.O_CREATE, 0644)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	defer func(dst *os.File) { _ = dst.Close() }(dst)
 	if _, err = io.Copy(dst, src); err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	return nil
 }

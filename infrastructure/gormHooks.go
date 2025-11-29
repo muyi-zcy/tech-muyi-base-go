@@ -2,7 +2,6 @@ package infrastructure
 
 import (
 	"context"
-	"fmt"
 	"reflect"
 	"time"
 
@@ -10,6 +9,7 @@ import (
 	"github.com/muyi-zcy/tech-muyi-base-go/myContext"
 	"github.com/muyi-zcy/tech-muyi-base-go/myId"
 	"github.com/muyi-zcy/tech-muyi-base-go/myLogger"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
@@ -238,7 +238,7 @@ func (h *BaseDOHook) setIdIfEmpty(ctx context.Context, modelValue reflect.Value)
 	// 生成新的ID
 	id, err := myId.NextId()
 	if err != nil {
-		return fmt.Errorf("生成ID失败: %v", err)
+		return errors.Wrap(err, "生成ID失败")
 	}
 
 	idField.SetInt(id)
@@ -606,7 +606,7 @@ func RegisterBaseDOHooks(db *gorm.DB) error {
 
 	// 使用Use方法注册插件
 	if err := db.Use(hook); err != nil {
-		return fmt.Errorf("注册BaseDO Hook失败: %v", err)
+		return errors.Wrap(err, "注册BaseDO Hook失败")
 	}
 
 	myLogger.Info("BaseDO GORM Hooks注册成功")

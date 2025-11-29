@@ -8,6 +8,43 @@ import (
 	"go.uber.org/zap"
 )
 
+// NotFoundHandler 处理404路由不存在的情况
+func NotFoundHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// 记录404错误日志（自动获取traceId）
+		myLogger.WarnCtx(c, "路由不存在",
+			zap.String("method", c.Request.Method),
+			zap.String("path", c.Request.URL.Path),
+			zap.String("ip", c.ClientIP()),
+		)
+
+		// 返回404错误响应
+		result := myResult.NotFound("请求的资源不存在")
+		c.JSON(200, result)
+		c.Abort()
+	}
+}
+
+// MethodNotAllowedHandler 处理405方法不允许的情况
+func MethodNotAllowedHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// 记录405错误日志（自动获取traceId）
+		myLogger.WarnCtx(c, "方法不允许",
+			zap.String("method", c.Request.Method),
+			zap.String("path", c.Request.URL.Path),
+			zap.String("ip", c.ClientIP()),
+		)
+
+		// 返回405错误响应（HTTP状态码统一为200，错误码为405）
+		result := myResult.FailWithCode(
+			myException.METHOD_NOT_ALLOWED.GetResultCode(),
+			"请求的方法不允许",
+		)
+		c.JSON(200, result)
+		c.Abort()
+	}
+}
+
 func ExceptionHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		defer func() {
