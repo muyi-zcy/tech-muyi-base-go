@@ -10,10 +10,8 @@ import (
 )
 
 func FileExists(filePath string) bool {
-	if _, err := os.Stat(filePath); err != nil {
-		return os.IsExist(err)
-	}
-	return true
+	_, err := os.Stat(filePath)
+	return err == nil || os.IsExist(err)
 }
 
 func DirectoryExists(dirPath string) bool {
@@ -51,83 +49,84 @@ func ChangeFileExt(filePath string, ext string) string {
 	}
 }
 
-func MkDirs(path string) bool {
+func MkDirs(path string) error {
 	if !DirectoryExists(path) {
-		return os.MkdirAll(path, os.ModePerm) == nil
-	} else {
-		return false
+		return os.MkdirAll(path, os.ModePerm)
 	}
+	return nil
 }
 
-func DeleteDirs(path string) bool {
-	return os.RemoveAll(path) == nil
+func DeleteDirs(path string) error {
+	return os.RemoveAll(path)
 }
 
-func DeleteFile(filePath string) bool {
-	return os.Remove(filePath) == nil
+func DeleteFile(filePath string) error {
+	return os.Remove(filePath)
 }
 
-func ReadFile(filePath string) string {
-	var ret = ""
-	if b, err := os.ReadFile(filePath); err == nil {
-		ret = string(b)
+func ReadFile(filePath string) (string, error) {
+	b, err := os.ReadFile(filePath)
+	if err != nil {
+		return "", err
 	}
-	return ret
+	return string(b), nil
 }
 
-func ReadFileBytes(filePath string) []byte {
-	var ret []byte
-	if b, err := os.ReadFile(filePath); err == nil {
-		ret = b
+func ReadFileBytes(filePath string) ([]byte, error) {
+	return os.ReadFile(filePath)
+}
+
+func ReadFileLines(filePath string) ([]string, error) {
+	b, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil, err
 	}
-	return ret
+	return strings.Split(string(b), "\n"), nil
 }
 
-func ReadFileLines(filePath string) []string {
-	var ret []string
-	if b, err := os.ReadFile(filePath); err == nil {
-		ret = strings.Split(string(b), "\n")
-	}
-	return ret
-}
-
-func WriteFile(filePath string, text string) bool {
+func WriteFile(filePath string, text string) error {
 	return WriteFileBytes(filePath, []byte(text))
 }
 
-func WriteFileBytes(filePath string, data []byte) bool {
+func WriteFileBytes(filePath string, data []byte) error {
 	p0 := ExtractFilePath(filePath)
 	if !DirectoryExists(p0) {
-		MkDirs(p0)
+		if err := MkDirs(p0); err != nil {
+			return err
+		}
 	}
 	if FileExists(filePath) {
-		DeleteFile(filePath)
+		if err := DeleteFile(filePath); err != nil {
+			return err
+		}
 	}
-	if fl, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY, 0644); err != nil {
-		return false
-	} else {
-		_, err := fl.Write(data)
-		_ = fl.Close()
-		return err == nil
+	fl, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return err
 	}
+	defer fl.Close()
+	_, err = fl.Write(data)
+	return err
 }
 
-func AppendFile(filePath string, text string) bool {
+func AppendFile(filePath string, text string) error {
 	return AppendFileBytes(filePath, []byte(text))
 }
 
-func AppendFileBytes(filePath string, data []byte) bool {
+func AppendFileBytes(filePath string, data []byte) error {
 	p0 := ExtractFilePath(filePath)
 	if !DirectoryExists(p0) {
-		MkDirs(p0)
+		if err := MkDirs(p0); err != nil {
+			return err
+		}
 	}
-	if fl, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err != nil {
-		return false
-	} else {
-		_, err := fl.Write(data)
-		_ = fl.Close()
-		return err == nil
+	fl, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return err
 	}
+	defer fl.Close()
+	_, err = fl.Write(data)
+	return err
 }
 
 // Deprecated:this function is replaced by CopyFileWithError, which will return the reason for copy failure.
@@ -144,29 +143,33 @@ func CopyFile(srcFilePath string, destFilePath string) bool {
 	return err == nil
 }
 
-func RenameFile(srcFilePath string, destFilePath string) bool {
+func RenameFile(srcFilePath string, destFilePath string) error {
 	p0 := ExtractFilePath(destFilePath)
 	if !DirectoryExists(p0) {
-		MkDirs(p0)
+		if err := MkDirs(p0); err != nil {
+			return err
+		}
 	}
-	return os.Rename(srcFilePath, destFilePath) == nil
+	return os.Rename(srcFilePath, destFilePath)
 }
 
-func CreateFile(filePath string) bool {
+func CreateFile(filePath string) error {
 	if FileExists(filePath) {
-		return true
+		return nil
 	}
 
 	p0 := ExtractFilePath(filePath)
 	if !DirectoryExists(p0) {
-		MkDirs(p0)
+		if err := MkDirs(p0); err != nil {
+			return err
+		}
 	}
 
-	if _, err := os.OpenFile(filePath, os.O_CREATE, 0644); err != nil {
-		return false
-	} else {
-		return true
+	fl, err := os.OpenFile(filePath, os.O_CREATE, 0644)
+	if err != nil {
+		return err
 	}
+	return fl.Close()
 }
 
 func Child(filePath string) ([]os.DirEntry, error) {

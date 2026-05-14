@@ -551,12 +551,9 @@ func (h *BaseDOHook) addDefaultFieldsToMap(ctx context.Context, updateMap map[st
 		updateMap["gmt_modified"] = time.Now().Truncate(time.Second)
 	}
 
-	// 添加行版本（如果不存在，需要从数据库获取当前版本并+1）
+	// 添加行版本（如果不存在，返回错误以保证乐观锁生效）
 	if _, exists := updateMap["row_version"]; !exists {
-		// 注意：这里无法直接获取当前版本，所以设置为1
-		// 实际使用中可能需要先查询当前版本
-		updateMap["row_version"] = 1
-		myLogger.WarnCtx(ctx, "Map更新无法获取当前行版本，设置为1，建议使用结构体更新")
+		return errors.New("map更新必须显式指定row_version以保证乐观锁生效，建议使用结构体更新")
 	}
 
 	return nil

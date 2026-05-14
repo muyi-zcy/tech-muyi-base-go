@@ -9,11 +9,14 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 )
 
 var (
 	// 全局配置实例
 	GlobalConfig *Config
+	// 配置读写锁
+	configMutex sync.RWMutex
 )
 
 // Config 配置结构体
@@ -153,7 +156,9 @@ func Init() error {
 		if err := viper.Unmarshal(tempConfig); err != nil {
 			fmt.Printf("重新加载配置失败: %v\n", err)
 		} else {
+			configMutex.Lock()
 			GlobalConfig = tempConfig
+			configMutex.Unlock()
 		}
 	})
 
@@ -241,11 +246,15 @@ func setDefaultConfig() {
 
 // GetConfig 获取全局配置
 func GetConfig() *Config {
+	configMutex.RLock()
+	defer configMutex.RUnlock()
 	return GlobalConfig
 }
 
 // GetAppName 获取应用名称
 func GetAppName() string {
+	configMutex.RLock()
+	defer configMutex.RUnlock()
 	if GlobalConfig != nil && GlobalConfig.AppName != "" {
 		return GlobalConfig.AppName
 	}
@@ -254,6 +263,8 @@ func GetAppName() string {
 
 // GetVersion 获取应用版本
 func GetVersion() string {
+	configMutex.RLock()
+	defer configMutex.RUnlock()
 	if GlobalConfig != nil && GlobalConfig.Version != "" {
 		return GlobalConfig.Version
 	}
@@ -262,6 +273,8 @@ func GetVersion() string {
 
 // GetServerConfig 获取服务器配置
 func GetServerConfig() ServerConfig {
+	configMutex.RLock()
+	defer configMutex.RUnlock()
 	if GlobalConfig != nil {
 		return GlobalConfig.Server
 	}
@@ -270,6 +283,8 @@ func GetServerConfig() ServerConfig {
 
 // GetLogConfig 获取日志配置
 func GetLogConfig() LogConfig {
+	configMutex.RLock()
+	defer configMutex.RUnlock()
 	if GlobalConfig != nil {
 		return GlobalConfig.Log
 	}
@@ -278,6 +293,8 @@ func GetLogConfig() LogConfig {
 
 // GetDatabaseConfig 获取数据库配置
 func GetDatabaseConfig() DatabaseConfig {
+	configMutex.RLock()
+	defer configMutex.RUnlock()
 	if GlobalConfig != nil {
 		return GlobalConfig.Database
 	}
@@ -286,6 +303,8 @@ func GetDatabaseConfig() DatabaseConfig {
 
 // GetRedisConfig 获取Redis配置
 func GetRedisConfig() RedisConfig {
+	configMutex.RLock()
+	defer configMutex.RUnlock()
 	if GlobalConfig != nil {
 		return GlobalConfig.Redis
 	}

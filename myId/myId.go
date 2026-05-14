@@ -51,12 +51,10 @@ func init() {
 
 	// 参数校验
 	if int(centerId) > maxCenterId || centerId < 0 {
-		fmt.Printf("Center ID can't be greater than %d or less than 0", maxCenterId)
-		return
+		panic(fmt.Sprintf("Center ID can't be greater than %d or less than 0", maxCenterId))
 	}
 	if int(workerId) > maxWorkerId || workerId < 0 {
-		fmt.Printf("Worker ID can't be greater than %d or less than 0", maxWorkerId)
-		return
+		panic(fmt.Sprintf("Worker ID can't be greater than %d or less than 0", maxWorkerId))
 	}
 
 	snowFlake.sequenceBits = 12 // 序列在ID中占的位数,最大为4095

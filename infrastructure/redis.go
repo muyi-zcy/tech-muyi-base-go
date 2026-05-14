@@ -15,9 +15,6 @@ import (
 var (
 	// RedisClient Redis客户端实例
 	RedisClient *redis.Client
-
-	// ctx Redis操作上下文
-	ctx = context.Background()
 )
 
 // InitRedis 初始化Redis连接
@@ -59,7 +56,7 @@ func InitRedis() error {
 	})
 
 	// 测试连接
-	_, err := RedisClient.Ping(ctx).Result()
+	_, err := RedisClient.Ping(context.Background()).Result()
 	if err != nil {
 		return errors.Wrap(err, "Redis连接测试失败")
 	}
@@ -72,10 +69,6 @@ func GetRedis() *redis.Client {
 	return RedisClient
 }
 
-// GetContext 获取Redis操作上下文
-func GetContext() context.Context {
-	return ctx
-}
 
 // CloseRedis 关闭Redis连接
 func CloseRedis() error {

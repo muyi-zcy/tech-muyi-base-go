@@ -178,6 +178,18 @@ func GetDB() *gorm.DB {
 	return DB
 }
 
+// HealthCheck 数据库健康检查
+func HealthCheck(ctx context.Context) error {
+	if DB == nil {
+		return errors.New("database not initialized")
+	}
+	sqlDB, err := DB.DB()
+	if err != nil {
+		return errors.Wrap(err, "failed to get database instance")
+	}
+	return sqlDB.PingContext(ctx)
+}
+
 // CloseDB 关闭数据库连接
 func CloseDB() error {
 	if DB != nil {

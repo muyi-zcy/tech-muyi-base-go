@@ -3,11 +3,25 @@ package middleware
 import (
 	"bytes"
 	"github.com/muyi-zcy/tech-muyi-base-go/myLogger"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
+
+const (
+	// 响应体最大记录大小 10KB
+	maxResponseBodySize = 10 * 1024
+)
+
+// 敏感路径列表，这些路径的响应体不记录日志
+var skipBodyLogPaths = []string{
+	"/api/v1/user/login",
+	"/api/v1/user/register",
+	"/api/v1/file/upload",
+	"/api/v1/file/download",
+}
 
 type bodyLogWriter struct {
 	gin.ResponseWriter
@@ -47,7 +61,25 @@ func Logger() gin.HandlerFunc {
 		end := time.Now()
 		duration := end.Sub(start)
 		statusCode := c.Writer.Status()
-		responseBody := blw.body.String()
+
+		// 判断是否需要记录响应体
+		var responseBody string
+		shouldSkipBody := false
+		for _, skipPath := range skipBodyLogPaths {
+			if strings.HasPrefix(path, skipPath) {
+				shouldSkipBody = true
+				break
+			}
+		}
+
+		if shouldSkipBody {
+			responseBody = "[REDACTED]"
+		} else if blw.body.Len() > maxResponseBodySize {
+			// 响应体过大，截断
+			responseBody = blw.body.String()[:maxResponseBodySize] + "...[truncated]"
+		} else {
+			responseBody = blw.body.String()
+		}
 
 		// 合并请求开始和结束信息
 		myLogger.InfoCtx(c.Request.Context(), "Request finished",
