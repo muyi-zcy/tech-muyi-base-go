@@ -2,6 +2,8 @@
 
 基于 Gin 的 Go 服务基础脚手架，内置配置中心（Viper）、日志（Zap + Lumberjack）、数据库（GORM/MySQL）、Redis、统一返回与中间件等，适合作为新服务的快速起步模板。
 
+> **完整使用说明**：[docs/USAGE.md](./docs/USAGE.md)（配置详解、分层开发、Nacos/gRPC、示例联调、最佳实践）
+
 ### 功能特性
 - **配置管理**: 基于 Viper，支持多环境 `dev/local/pre/prod`，支持热更新
 - **日志体系**: Zap + 滚动日志（lumberjack），可选输出到控制台，支持 TraceId 透传
@@ -9,28 +11,25 @@
 - **数据访问**: GORM（MySQL 驱动）、Redis 客户端
 - **统一返回**: `myResult` 统一成功/失败响应
 - **错误与恢复**: 中间件捕获异常并记录
+- **可插拔 Nacos**: 服务注册发现 + 可选配置中心（`plugins.nacos.enabled`）
+- **可插拔 gRPC**: 对内 RPC 通信，HTTP/RPC 双端口并行（`plugins.rpc.enabled`）
 
 ### 环境要求
 - Go 1.22.x
 - 可选：MySQL、Redis（如不需要可不启用对应功能）
+- 可选：Nacos 2.x（启用 `plugins.nacos` 时需要）
 
 ### 目录结构（节选）
 ```
 app/                     # 各环境配置文件（TOML）
-config/                  # 配置装载与默认值
-core/                    # 应用初始化、启动器
-infrastructure/          # 数据库、Redis 初始化与连接
+config/                  # 配置装载与默认值（含 plugins.nacos / plugins.rpc）
+core/                    # 应用初始化、启动器、优雅退出
+infrastructure/          # 数据库、Redis、Nacos、gRPC（可插拔）
+  nacos/                 # Nacos 注册/发现/配置
+  rpc/                   # gRPC Server/Client/Resolver/拦截器
 middleware/              # 日志、异常处理等
-model/                   # 数据模型
-myContext/, myException/ # 上下文与异常封装
-myLogger/                # 日志封装
-myObject/                # 常用对象与工具
-myRepository/            # 仓储基础封装
-myResult/                # 统一返回结构
-myUtils/                 # 常用工具
+myContext/               # HTTP + gRPC 上下文透传
 main.go                  # 入口，注册路由与启动
-Dockerfile               # 多阶段构建镜像
-start.sh                 # 容器/本地启动脚本（Linux/容器环境）
 ```
 
 ### 快速开始（本地）
@@ -87,6 +86,60 @@ curl -X POST http://127.0.0.1:8080/api/v1/test/echo -H "Content-Type: applicatio
 
 当配置文件缺失时，会回落到内置默认值并继续运行。
 
+### Nacos + gRPC 可插拔配置
+
+默认 **关闭**（minimal 场景），在 TOML 中按需开启：
+
+```toml
+[plugins.nacos]
+enabled = true
+serverAddr = "127.0.0.1:8848"
+namespace = "dev"
+group = "XI_PLATFORM"
+serviceName = "xi.user"
+
+[plugins.rpc]
+enabled = true
+registry = "nacos"          # nacos | static
+
+[plugins.rpc.server]
+port = 9081
+enableReflection = true     # dev 环境便于 grpcurl 调试
+
+[plugins.rpc.client]
+defaultTimeoutMs = 3000
+
+[plugins.rpc.client.services]
+xi.app = "xi.app"
+
+# static 降级（registry = "static" 或 Nacos 关闭时）
+[plugins.rpc.static]
+xi.app = "127.0.0.1:9080"
+```
+
+**降级行为：**
+- `plugins.nacos.enabled=false` → 跳过注册，RPC 自动改用 static 模式
+- `plugins.rpc.enabled=false` → 仅启动 HTTP，不监听 gRPC 端口
+- Nacos 连接失败 → 降级 noop，**不阻断** HTTP 启动
+
+### 注册 gRPC 服务（业务侧）
+
+```go
+starter, _ := core.Initialize()
+
+// 注册 proto 生成的 Service（plugins.rpc.enabled=true 时生效）
+starter.RegisterGrpcServices(func(s *grpc.Server) {
+    userpb.RegisterPermissionServiceServer(s, &PermissionServer{...})
+})
+
+// 获取 RPC 客户端调其他服务
+conn, _ := starter.GetRpcManager().Client().GetConn("xi.app")
+client := apppb.NewCatalogServiceClient(conn)
+
+starter.Run()
+// 或: starter.RunWithGrpc(func(s *grpc.Server) { ... })
+```
+
 ### 运行与构建
 - 直接运行
 ```bash
@@ -142,5 +195,18 @@ curl http://127.0.0.1:28080/
 
 ### 许可
 本项目示例代码可自由使用与修改，具体以仓库实际 LICENSE 为准。
+
+### Cursor Skills
+
+仓库内置 Agent Skills（`.cursor/skills/`），可在 Cursor 中自动辅助开发：
+
+| Skill | 用途 |
+|-------|------|
+| `tech-muyi-base-go` | 总览与任务路由 |
+| `tech-muyi-base-go-project-init` | 新建项目、配置初始化 |
+| `tech-muyi-base-go-db-scaffold` | Model/Repository/Service/Controller |
+| `tech-muyi-base-go-api` | Controller、myResult、myContext |
+| `tech-muyi-base-go-exception` | 异常与错误码 |
+| `tech-muyi-base-go-rpc` | Nacos + gRPC 接入 |
 
 

@@ -1,9 +1,11 @@
 ---
 name: tech-muyi-base-go-db-scaffold
-description: 根据数据库表创建 Model、Repository、Service、Controller 分层代码。使用 tech-muyi-base-go 的 model.BaseDO、myRepository.BaseRepository 等基础组件。使用场景：新增业务表 CRUD、从表结构生成分层代码、遵循 BaseDO/BaseRepository 规范。
+description: 根据数据库表为 tech-muyi-base-go 生成分层代码：Model（BaseDO/DateTime）、Repository（BaseRepository CRUD/软删除/分页）、Service、Controller。含字段类型映射、建表规范、GetDB 复杂查询。使用场景：新增业务表 CRUD、表结构转 Go 代码、BaseDO 继承。
 ---
 
 # tech-muyi-base-go 分层代码脚手架
+
+完整文档：[docs/USAGE.md §9-12](../../../docs/USAGE.md#9-数据库与-gorm)。
 
 tech-muyi-base-go 提供 `model.BaseDO` 与 `myRepository.BaseRepository`，无内置代码生成器。按本 Skill 手动或借助工具生成符合规范的 Model/Repository/Service/Controller。
 

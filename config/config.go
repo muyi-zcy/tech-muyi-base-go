@@ -27,6 +27,7 @@ type Config struct {
 	Log      LogConfig      `mapstructure:"log"`
 	Database DatabaseConfig `mapstructure:"database"`
 	Redis    RedisConfig    `mapstructure:"redis"`
+	Plugins  PluginsConfig  `mapstructure:"plugins"`
 }
 
 // ServerConfig 服务器配置
@@ -190,6 +191,8 @@ func GetConfigByType(configType string, target interface{}) error {
 		return viper.UnmarshalKey("database", target)
 	case "redis":
 		return viper.UnmarshalKey("redis", target)
+	case "plugins", "plugins.nacos", "plugins.rpc":
+		return viper.UnmarshalKey(configType, target)
 	default:
 		return viper.UnmarshalKey(configType, target)
 	}
@@ -242,6 +245,19 @@ func setDefaultConfig() {
 	viper.SetDefault("redis.max_retries", 2)
 	viper.SetDefault("redis.min_retry_backoff_ms", 8)
 	viper.SetDefault("redis.max_retry_backoff_ms", 512)
+	viper.SetDefault("plugins.nacos.enabled", false)
+	viper.SetDefault("plugins.nacos.serverAddr", "127.0.0.1:8848")
+	viper.SetDefault("plugins.nacos.namespace", "")
+	viper.SetDefault("plugins.nacos.group", "XI_PLATFORM")
+	viper.SetDefault("plugins.nacos.configEnabled", false)
+	viper.SetDefault("plugins.rpc.enabled", false)
+	viper.SetDefault("plugins.rpc.protocol", "grpc")
+	viper.SetDefault("plugins.rpc.registry", "nacos")
+	viper.SetDefault("plugins.rpc.server.port", 9080)
+	viper.SetDefault("plugins.rpc.server.maxRecvMsgSize", 4194304)
+	viper.SetDefault("plugins.rpc.server.enableReflection", false)
+	viper.SetDefault("plugins.rpc.client.defaultTimeoutMs", 3000)
+	viper.SetDefault("plugins.rpc.client.maxRetry", 0)
 }
 
 // GetConfig 获取全局配置

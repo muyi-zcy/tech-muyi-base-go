@@ -1,9 +1,11 @@
 ---
 name: tech-muyi-base-go-api
-description: Controller 层规范、myResult 统一返回、myContext 获取 traceId/ssoId、接口响应格式。使用场景：编写 HTTP 接口、统一成功/失败返回、分页查询返回、需要 traceId/ssoId 的请求链路。
+description: tech-muyi-base-go Controller 层规范、myResult 统一返回（HTTP 200 + body success/code）、MyQuery 分页、myContext traceId/ssoId 透传、路由小驼峰命名。使用场景：编写 HTTP 接口、Success/ErrorWithError、分页 listUsers、请求链路 traceId。
 ---
 
 # tech-muyi-base-go API 层规范
+
+完整文档：[docs/USAGE.md §13-15](../../../docs/USAGE.md#13-controller-与-api-规范)。
 
 基于 `github.com/muyi-zcy/tech-muyi-base-go` 的 myResult、myContext 实现 Controller 层与统一返回。
 

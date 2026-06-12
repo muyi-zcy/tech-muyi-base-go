@@ -1,9 +1,10 @@
 package core
 
 import (
-	"fmt"
 	"github.com/muyi-zcy/tech-muyi-base-go/config"
 	"github.com/muyi-zcy/tech-muyi-base-go/infrastructure"
+	"github.com/muyi-zcy/tech-muyi-base-go/infrastructure/nacos"
+	"github.com/muyi-zcy/tech-muyi-base-go/infrastructure/rpc"
 	"github.com/muyi-zcy/tech-muyi-base-go/middleware"
 	"github.com/muyi-zcy/tech-muyi-base-go/myContext"
 	"github.com/muyi-zcy/tech-muyi-base-go/myLogger"
@@ -142,6 +143,22 @@ func (s *Starter) RegisterInfrastructure() error {
 		myLogger.Info("Redis连接初始化成功")
 	}
 
+	// 可插拔：Nacos + RPC
+	if err := s.registerPlugins(); err != nil {
+		myLogger.Warn("插件初始化部分失败，服务继续启动", zap.Error(err))
+	}
+
+	return nil
+}
+
+func (s *Starter) registerPlugins() error {
+	if s.App.Config == nil {
+		return nil
+	}
+	if _, err := nacos.InitWithError(s.App.Config); err != nil {
+		myLogger.Warn("Nacos 插件初始化失败，已降级为 noop", zap.Error(err))
+	}
+	rpc.Init(s.App.Config, nacos.GetRegistry())
 	return nil
 }
 
@@ -168,28 +185,4 @@ func (s *Starter) needRedis() bool {
 // GetEngine 获取Gin引擎
 func (s *Starter) GetEngine() *gin.Engine {
 	return s.Engine
-}
-
-// Run 启动应用
-func (s *Starter) Run() error {
-	// 注册健康检查路由
-	healthController := NewHealthCheckController()
-	RegisterHealthCheckRoutes(s.Engine, healthController)
-
-	// 注册404和405错误处理（必须在所有路由注册之后）
-	s.Engine.NoRoute(middleware.NotFoundHandler())
-	s.Engine.NoMethod(middleware.MethodNotAllowedHandler())
-
-	port := 8080
-	if s.App.Config != nil && s.App.Config.Server.Port > 0 {
-		port = s.App.Config.Server.Port
-	}
-
-	myLogger.Info("应用启动中",
-		zap.String("name", s.App.Name),
-		zap.String("version", s.App.Version),
-		zap.Int("port", port),
-	)
-
-	return s.Engine.Run(fmt.Sprintf(":%d", port))
 }

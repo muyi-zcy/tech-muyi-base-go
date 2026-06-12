@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package example;
+
+option go_package = "github.com/muyi-zcy/tech-muyi-base-go/example/proto/echo";
+
+service EchoService {
+  rpc Ping(PingRequest) returns (PingReply);
+  rpc Echo(EchoRequest) returns (EchoReply);
+}
+
+message PingRequest {}
+
+message PingReply {
+  string message = 1;
+}
+
+message EchoRequest {
+  string message = 1;
+}
+
+message EchoReply {
+  string message = 1;
+}

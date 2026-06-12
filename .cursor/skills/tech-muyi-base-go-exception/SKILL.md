@@ -1,9 +1,11 @@
 ---
 name: tech-muyi-base-go-exception
-description: 使用 tech-muyi-base-go 的 myException 进行错误处理，包括 MyException、错误码枚举、NewException、NewExceptionFromError、RegisterErrorCode、ValidationError、NotFoundError。使用场景：业务异常抛出、错误码定义、校验失败、资源不存在等错误处理。
+description: tech-muyi-base-go myException 错误处理：MyException、ValidationError、NotFoundError、CommonErrorCodeEnum、RegisterErrorCode、ExceptionHandler 中间件配合、Repository/Service 层 pkg/errors Wrap。使用场景：业务异常、错误码注册、参数校验失败、404、错误分层映射。
 ---
 
 # tech-muyi-base-go 异常处理
+
+完整文档：[docs/USAGE.md §14](../../../docs/USAGE.md#14-异常处理)。
 
 基于 `github.com/muyi-zcy/tech-muyi-base-go/myException` 进行统一错误处理。
 

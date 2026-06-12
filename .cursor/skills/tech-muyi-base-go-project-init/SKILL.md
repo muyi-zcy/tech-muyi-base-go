@@ -1,9 +1,11 @@
 ---
 name: tech-muyi-base-go-project-init
-description: 新建基于 tech-muyi-base-go 的 Go 项目、初始化目录结构、配置 core.Initialize、Viper 配置与基础设施（DB、Redis）。使用场景：新建服务、从零搭建 Go 后端、初始化项目骨架、配置多环境（dev/local/pre/prod）、接入数据库或 Redis。
+description: 新建基于 tech-muyi-base-go 的 Go 项目、初始化目录结构、go.mod、app/*.conf 多环境 TOML、core.Initialize 与 DB/Redis 自动注册。使用场景：新建 Go 微服务、从零搭建后端骨架、配置 dev/local/pre/prod、决定是否接入 MySQL 或 Redis、main.go 模板。
 ---
 
 # tech-muyi-base-go 项目初始化
+
+完整文档：[docs/USAGE.md §3-5](../../../docs/USAGE.md#3-快速开始)。
 
 基于 `github.com/muyi-zcy/tech-muyi-base-go` 创建新项目时，按本 Skill 进行初始化与配置。
 
