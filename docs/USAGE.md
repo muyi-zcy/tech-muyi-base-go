@@ -728,11 +728,85 @@ Service     → 映射 gorm.ErrRecordNotFound → NOT_FOUND；其他 Wrap
 Controller  → myResult.ErrorWithError(c, err)
 ```
 
+### 14.5 错误码格式（v2）
+
+错误码格式为 `{appCode}.{module}.{semantic}`，第一段必须是 appCode：
+
+```
+user.username.exists
+app.register.duplicate_code
+platform.validation.required
+```
+
+推荐使用 `BizError`，只抛 code + args：
+
+```go
+return myException.NewBizError("user.username.exists", map[string]string{
+    "username": req.Username,
+})
+```
+
+`ExceptionHandler` 会按 `Accept-Language` 自动 Resolve message。详见平台异常与国际化统一方案。
+
 ---
 
-## 15. 上下文透传 traceId / ssoId
+## 15. 错误文案（myLocale）
 
-### 15.1 HTTP
+各服务自行维护 `contracts/errors.yaml` 与 `locales/{locale}/errors.yaml`。框架内置 `platform.*` 公共错误文案，服务文案会覆盖同 key。
+
+### 15.1 目录结构
+
+```
+my-xi-user/
+├── contracts/errors.yaml
+├── locales/zh-CN/errors.yaml
+└── locales/en-US/errors.yaml
+```
+
+### 15.2 接入
+
+```go
+import "embed"
+
+//go:embed contracts locales
+var localeFS embed.FS
+
+func main() {
+    starter, _ := core.Initialize()
+    starter.RegisterLocale(core.LocaleOptionsFromEmbed("user", localeFS))
+}
+```
+
+### 15.3 默认 HTTP 接口
+
+| 路径 | 说明 |
+|------|------|
+| `GET /api/v1/open/error-messages?locale=zh-CN` | 前端拉取文案包 |
+| `GET /api/v1/open/error-contracts` | 错误码契约 |
+| `GET /api/v1/open/locales` | 支持的语言列表 |
+
+### 15.4 Locale 中间件
+
+`Initialize()` 已自动注册 `LocaleMiddleware`，解析顺序：`?locale=` → `Accept-Language` → 配置默认语言。
+
+### 15.5 配置
+
+```toml
+app_code = "user"
+
+[locale]
+enabled = true
+default_locale = "zh-CN"
+supported_locales = ["zh-CN", "en-US"]
+```
+
+**说明：** i18n 范围**仅错误 message**。API 时间字段使用 RFC3339 带时区格式（`model.DateTime`）。
+
+---
+
+## 16. 上下文透传 traceId / ssoId
+
+### 16.1 HTTP
 
 | 来源 | Header / Cookie |
 |------|-----------------|
@@ -741,7 +815,7 @@ Controller  → myResult.ErrorWithError(c, err)
 
 无则自动生成：traceId=UUID，ssoId=`-1`。
 
-### 15.2 获取方式
+### 16.2 获取方式
 
 ```go
 // Controller
@@ -756,13 +830,13 @@ ssoId, _ := myContext.GetSsoId(ctx)
 traceId := myContext.TryGetTraceId(ctx)
 ```
 
-### 15.3 gRPC
+### 16.3 gRPC
 
 客户端拦截器注入 metadata（x-trace-id、x-sso-id、x-source-service）；服务端 `ContextExtract` 拦截器还原到 context。
 
 ---
 
-## 16. Nacos 服务注册与发现
+## 17. Nacos 服务注册与发现
 
 ### 16.1 配置
 
@@ -787,7 +861,7 @@ serviceName = "my.service"
 
 ---
 
-## 17. gRPC 插件
+## 18. gRPC 插件
 
 ### 17.1 模式对比
 
@@ -884,7 +958,7 @@ grpcurl -plaintext -d '{"message":"hello"}' 127.0.0.1:9081 example.EchoService/E
 
 ---
 
-## 18. 示例服务联调
+## 19. 示例服务联调
 
 详见 [example/README.md](../example/README.md)。
 
@@ -917,7 +991,7 @@ curl http://127.0.0.1:8082/api/v1/loop/status
 
 ---
 
-## 19. Docker 部署
+## 20. Docker 部署
 
 ```bash
 docker build -t tech-muyi-base-go:latest .
@@ -934,7 +1008,7 @@ docker run -d --name tech-muyi-go \
 
 ---
 
-## 20. 常见问题
+## 21. 常见问题
 
 ### Q: 数据库/Redis 未初始化？
 
@@ -970,7 +1044,7 @@ BaseDO 的 Id 使用 `json:"id,string"`，前端以字符串接收。
 
 ---
 
-## 21. 最佳实践清单
+## 22. 最佳实践清单
 
 - [ ] 新建服务先确认是否需要 MySQL / Redis / Nacos / RPC
 - [ ] `app/app-*.conf` 四个环境都维护，敏感信息 prod 用环境变量或密钥管理
@@ -983,6 +1057,7 @@ BaseDO 的 Id 使用 `json:"id,string"`，前端以字符串接收。
 - [ ] RPC 生产用 nacos，本地联调可用 static
 - [ ] dev 环境开 `enableReflection` 便于 grpcurl 调试
 - [ ] logs/ 加入 .gitignore
+- [ ] 各服务维护 contracts/ + locales/，注册 myLocale open API
 - [ ] 依赖通过 `go get ...@latest && go mod tidy` 管理版本
 
 ---

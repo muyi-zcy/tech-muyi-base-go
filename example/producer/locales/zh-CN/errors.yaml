@@ -1,0 +1,3 @@
+producer.rpc.client_failed: "连接 {{peer}} 失败：{{reason}}"
+producer.rpc.call_failed: "调用 {{method}} 失败：{{reason}}"
+producer.demo.error: "{{field}} 校验失败（producer 演示）"

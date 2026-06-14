@@ -1,0 +1,16 @@
+appCode: example
+codes:
+  - code: example.echo.invalid_body
+    httpHint: 400
+  - code: example.db.unavailable
+    httpHint: 500
+    args: [reason]
+  - code: example.db.query_failed
+    httpHint: 500
+  - code: example.redis.write_failed
+    httpHint: 500
+  - code: example.redis.read_failed
+    httpHint: 500
+  - code: example.validation.required
+    httpHint: 400
+    args: [field]

@@ -1,0 +1,5 @@
+platform.validation.required: "{{field}} 不能为空"
+platform.resource.not_found: "{{resource}} {{id}} 不存在"
+platform.route.not_found: "请求的资源不存在"
+platform.method.not_allowed: "请求的方法不允许"
+platform.internal_error: "系统内部错误"

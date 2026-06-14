@@ -25,9 +25,9 @@ fi
 
 log_info "========== producer 测试开始 =========="
 
-assert_success "GET /" "$(http_get "${BASE_URL}/")"
-direct_body="$(http_get "${BASE_URL}/api/v1/test/direct?message=hello")"
-assert_success "GET /api/v1/test/direct (static)" "${direct_body}"
+assert_success "GET /api/producer/" "$(http_get "${BASE_URL}/api/producer/")"
+direct_body="$(http_get "${BASE_URL}/api/producer/v1/test/direct?message=hello")"
+assert_success "GET /api/producer/v1/test/direct (static)" "${direct_body}"
 assert_contains "static echo 回显" "${direct_body}" "producer echo: hello"
 
 if command -v grpcurl >/dev/null 2>&1; then

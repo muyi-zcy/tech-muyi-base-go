@@ -14,6 +14,7 @@ require (
 	google.golang.org/grpc v1.64.0
 	google.golang.org/protobuf v1.34.2
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
+	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/driver/mysql v1.6.0
 	gorm.io/gorm v1.30.2
 )
@@ -81,5 +82,4 @@ require (
 	golang.org/x/time v0.5.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240318140521-94a12d6c2237 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

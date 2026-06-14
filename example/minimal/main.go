@@ -1,9 +1,14 @@
 package main
 
 import (
+	"embed"
+
 	"github.com/muyi-zcy/tech-muyi-base-go/core"
 	"github.com/muyi-zcy/tech-muyi-base-go/example/minimal/routes"
 )
+
+//go:embed contracts locales
+var localeFS embed.FS
 
 func main() {
 	starter, err := core.Initialize()
@@ -11,7 +16,11 @@ func main() {
 		panic(err)
 	}
 
-	routes.Register(starter.GetEngine())
+	if err := starter.RegisterLocale(core.LocaleOptionsFromEmbed("example", localeFS)); err != nil {
+		panic(err)
+	}
+
+	routes.Register(starter.GetAPIGroup())
 
 	if err := starter.Run(); err != nil {
 		panic(err)

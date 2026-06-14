@@ -1,0 +1,3 @@
+consumer.rpc.discovery_failed: "Failed to discover/connect {{peer}}: {{reason}}"
+consumer.rpc.call_failed: "Failed to call {{method}}: {{reason}}"
+consumer.demo.error: "{{field}} validation failed (consumer demo)"

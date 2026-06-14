@@ -1,0 +1,6 @@
+example.echo.invalid_body: "请求体必须是 JSON"
+example.db.unavailable: "数据库连接失败：{{reason}}"
+example.db.query_failed: "数据库查询失败"
+example.redis.write_failed: "Redis 写入失败"
+example.redis.read_failed: "Redis 读取失败"
+example.validation.required: "{{field}} 不能为空"

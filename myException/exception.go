@@ -69,20 +69,24 @@ func NewNotFoundError(resource string, id interface{}) *NotFoundError {
 // GetErrorCode 获取错误码
 func GetErrorCode(err error) string {
 	switch e := err.(type) {
+	case *BizError:
+		return e.Code
 	case *MyException:
 		return e.Code
 	case *ValidationError:
-		return BAD_REQUEST.GetResultCode()
+		return "platform.validation.required"
 	case *NotFoundError:
-		return NOT_FOUND.GetResultCode()
+		return "platform.resource.not_found"
 	default:
 		return INTERNAL_SERVER_ERROR.GetResultCode()
 	}
 }
 
-// GetErrorMessage 获取错误消息
+// GetErrorMessage 获取错误消息（未做 locale 解析时的兜底）
 func GetErrorMessage(err error) string {
 	switch e := err.(type) {
+	case *BizError:
+		return e.Code
 	case *MyException:
 		return e.Message
 	case *ValidationError:
@@ -91,5 +95,19 @@ func GetErrorMessage(err error) string {
 		return e.Error()
 	default:
 		return err.Error()
+	}
+}
+
+// GetErrorArgs 获取业务错误参数
+func GetErrorArgs(err error) map[string]string {
+	switch e := err.(type) {
+	case *BizError:
+		return e.Args
+	case *ValidationError:
+		return map[string]string{"field": e.Field, "message": e.Message}
+	case *NotFoundError:
+		return map[string]string{"resource": e.Resource, "id": fmt.Sprint(e.ID)}
+	default:
+		return nil
 	}
 }

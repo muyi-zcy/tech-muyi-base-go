@@ -25,10 +25,10 @@ fi
 log_info "========== minimal 测试开始 =========="
 
 assert_ok_text "health /ok" "$(http_get "${BASE_URL}/ok")"
-assert_success "GET /api/v1/test/ping" "$(http_get "${BASE_URL}/api/v1/test/ping")"
-assert_success "GET /api/v1/test/db" "$(http_get "${BASE_URL}/api/v1/test/db")"
-assert_success "GET /api/v1/test/redis" "$(http_get "${BASE_URL}/api/v1/test/redis")"
-assert_success "POST /api/v1/test/echo" \
-  "$(http_post_json "${BASE_URL}/api/v1/test/echo" '{"hello":"world"}')"
+assert_success "GET /api/example/v1/test/ping" "$(http_get "${BASE_URL}/api/example/v1/test/ping")"
+assert_success "GET /api/example/v1/test/db" "$(http_get "${BASE_URL}/api/example/v1/test/db")"
+assert_success "GET /api/example/v1/test/redis" "$(http_get "${BASE_URL}/api/example/v1/test/redis")"
+assert_success "POST /api/example/v1/test/echo" \
+  "$(http_post_json "${BASE_URL}/api/example/v1/test/echo" '{"hello":"world"}')"
 
 print_summary

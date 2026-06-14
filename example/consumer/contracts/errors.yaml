@@ -1,0 +1,11 @@
+appCode: consumer
+codes:
+  - code: consumer.rpc.discovery_failed
+    httpHint: 502
+    args: [peer, reason]
+  - code: consumer.rpc.call_failed
+    httpHint: 502
+    args: [method, reason]
+  - code: consumer.demo.error
+    httpHint: 400
+    args: [field]

@@ -1,0 +1,3 @@
+producer.rpc.client_failed: "Failed to connect {{peer}}: {{reason}}"
+producer.rpc.call_failed: "Failed to call {{method}}: {{reason}}"
+producer.demo.error: "{{field}} validation failed (producer demo)"

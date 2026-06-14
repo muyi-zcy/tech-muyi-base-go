@@ -22,12 +22,21 @@ var (
 // Config 配置结构体
 type Config struct {
 	AppName  string         `mapstructure:"app_name"`
+	AppCode  string         `mapstructure:"app_code"`
 	Version  string         `mapstructure:"version"`
 	Server   ServerConfig   `mapstructure:"server"`
 	Log      LogConfig      `mapstructure:"log"`
 	Database DatabaseConfig `mapstructure:"database"`
 	Redis    RedisConfig    `mapstructure:"redis"`
+	Locale   LocaleConfig   `mapstructure:"locale"`
 	Plugins  PluginsConfig  `mapstructure:"plugins"`
+}
+
+// LocaleConfig 错误文案（i18n）配置
+type LocaleConfig struct {
+	Enabled          bool     `mapstructure:"enabled"`
+	DefaultLocale    string   `mapstructure:"default_locale"`
+	SupportedLocales []string `mapstructure:"supported_locales"`
 }
 
 // ServerConfig 服务器配置
@@ -201,6 +210,7 @@ func GetConfigByType(configType string, target interface{}) error {
 // setDefaultConfig 设置默认配置
 func setDefaultConfig() {
 	viper.SetDefault("app_name", "TechMuYiApp")
+	viper.SetDefault("app_code", "")
 	viper.SetDefault("version", "1.0.0")
 	viper.SetDefault("server.port", 8080)
 	viper.SetDefault("server.mode", "dev")
@@ -258,6 +268,8 @@ func setDefaultConfig() {
 	viper.SetDefault("plugins.rpc.server.enableReflection", false)
 	viper.SetDefault("plugins.rpc.client.defaultTimeoutMs", 3000)
 	viper.SetDefault("plugins.rpc.client.maxRetry", 0)
+	viper.SetDefault("locale.enabled", true)
+	viper.SetDefault("locale.default_locale", "zh-CN")
 }
 
 // GetConfig 获取全局配置
@@ -265,6 +277,25 @@ func GetConfig() *Config {
 	configMutex.RLock()
 	defer configMutex.RUnlock()
 	return GlobalConfig
+}
+
+// GetAppCode 获取应用编码（API 路径前缀 /api/{appCode}）
+func GetAppCode() string {
+	configMutex.RLock()
+	defer configMutex.RUnlock()
+	if GlobalConfig != nil && GlobalConfig.AppCode != "" {
+		return GlobalConfig.AppCode
+	}
+	return ""
+}
+
+// APIPrefix 返回 API 路径前缀，格式 /api/{appCode}
+func APIPrefix() string {
+	appCode := GetAppCode()
+	if appCode == "" {
+		return "/api"
+	}
+	return "/api/" + appCode
 }
 
 // GetAppName 获取应用名称

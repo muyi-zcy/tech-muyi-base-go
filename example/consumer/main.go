@@ -1,6 +1,7 @@
 package main
 
 import (
+	"embed"
 	"time"
 
 	"github.com/muyi-zcy/tech-muyi-base-go/core"
@@ -10,19 +11,25 @@ import (
 	"google.golang.org/grpc"
 )
 
+//go:embed contracts locales
+var localeFS embed.FS
+
 func main() {
 	starter, err := core.Initialize()
 	if err != nil {
 		panic(err)
 	}
 
-	routes.Register(starter.GetEngine(), starter)
+	if err := starter.RegisterLocale(core.LocaleOptionsFromEmbed("consumer", localeFS)); err != nil {
+		panic(err)
+	}
+
+	routes.Register(starter.GetAPIGroup(), starter)
 
 	starter.RegisterGrpcServices(func(s *grpc.Server) {
 		server.RegisterEchoService(s)
 	})
 
-	// 持续通过 Nacos 调用 producer
 	callloop.Start(starter, callloop.Config{
 		Self:         "example-consumer",
 		PeerKey:      "example_producer",

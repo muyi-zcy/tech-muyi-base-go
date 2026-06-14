@@ -21,27 +21,26 @@ type DateTime time.Time
 const dateTimeFormat = "2006-01-02 15:04:05"
 
 func (t DateTime) MarshalJSON() ([]byte, error) {
-	var stamp = fmt.Sprintf("\"%s\"", time.Time(t).Format("2006-01-02 15:04:05"))
+	stamp := fmt.Sprintf("\"%s\"", time.Time(t).Format(time.RFC3339))
 	return []byte(stamp), nil
 }
+
 func (dt *DateTime) UnmarshalJSON(data []byte) error {
-	// 转成字符串
 	str := strings.TrimSpace(string(data))
 	if str == "null" || str == `""` || str == "" {
 		return nil
 	}
-
-	// 去掉首尾的引号
 	str = strings.Trim(str, `"`)
 
-	// 解析时间
-	parsed, err := time.ParseInLocation(dateTimeFormat, str, time.Local)
-	if err != nil {
-		return err
+	if parsed, err := time.Parse(time.RFC3339, str); err == nil {
+		*dt = DateTime(parsed)
+		return nil
 	}
-
-	*dt = DateTime(parsed)
-	return nil
+	if parsed, err := time.ParseInLocation(dateTimeFormat, str, time.Local); err == nil {
+		*dt = DateTime(parsed)
+		return nil
+	}
+	return fmt.Errorf("invalid datetime: %s", str)
 }
 func (t DateTime) Value() (driver.Value, error) {
 	return time.Time(t), nil

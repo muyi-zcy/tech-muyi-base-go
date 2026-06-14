@@ -15,12 +15,12 @@ const (
 	maxResponseBodySize = 10 * 1024
 )
 
-// 敏感路径列表，这些路径的响应体不记录日志
-var skipBodyLogPaths = []string{
-	"/api/v1/user/login",
-	"/api/v1/user/register",
-	"/api/v1/file/upload",
-	"/api/v1/file/download",
+// 敏感路径后缀列表，这些路径的响应体不记录日志（兼容 /api/{appCode} 前缀）
+var skipBodyLogSuffixes = []string{
+	"/v1/user/login",
+	"/v1/user/register",
+	"/v1/file/upload",
+	"/v1/file/download",
 }
 
 type bodyLogWriter struct {
@@ -65,8 +65,8 @@ func Logger() gin.HandlerFunc {
 		// 判断是否需要记录响应体
 		var responseBody string
 		shouldSkipBody := false
-		for _, skipPath := range skipBodyLogPaths {
-			if strings.HasPrefix(path, skipPath) {
+		for _, suffix := range skipBodyLogSuffixes {
+			if strings.HasSuffix(path, suffix) {
 				shouldSkipBody = true
 				break
 			}

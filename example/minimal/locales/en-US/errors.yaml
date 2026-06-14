@@ -1,0 +1,6 @@
+example.echo.invalid_body: "Request body must be JSON"
+example.db.unavailable: "Database connection failed: {{reason}}"
+example.db.query_failed: "Database query failed"
+example.redis.write_failed: "Redis write failed"
+example.redis.read_failed: "Redis read failed"
+example.validation.required: "{{field}} is required"

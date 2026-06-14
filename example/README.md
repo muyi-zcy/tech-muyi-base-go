@@ -42,6 +42,10 @@ curl http://127.0.0.1:8080/api/v1/test/ping
 curl http://127.0.0.1:8080/api/v1/test/db
 curl http://127.0.0.1:8080/api/v1/test/redis
 curl -X POST http://127.0.0.1:8080/api/v1/test/echo -H "Content-Type: application/json" -d '{"hello":"world"}'
+curl "http://127.0.0.1:8080/api/v1/test/time"
+curl "http://127.0.0.1:8080/api/v1/test/error-demo?field=email"
+curl -H "Accept-Language: en-US" "http://127.0.0.1:8080/api/v1/test/error-demo?field=email"
+curl "http://127.0.0.1:8080/api/v1/open/error-messages?locale=zh-CN"
 ```
 
 ## 2. producer — gRPC 直连

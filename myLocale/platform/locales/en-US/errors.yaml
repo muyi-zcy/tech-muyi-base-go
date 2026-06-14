@@ -1,0 +1,5 @@
+platform.validation.required: "{{field}} is required"
+platform.resource.not_found: "{{resource}} {{id}} not found"
+platform.route.not_found: "The requested resource was not found"
+platform.method.not_allowed: "Method not allowed"
+platform.internal_error: "Internal server error"

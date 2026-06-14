@@ -1,0 +1,11 @@
+appCode: producer
+codes:
+  - code: producer.rpc.client_failed
+    httpHint: 502
+    args: [peer, reason]
+  - code: producer.rpc.call_failed
+    httpHint: 502
+    args: [method, reason]
+  - code: producer.demo.error
+    httpHint: 400
+    args: [field]

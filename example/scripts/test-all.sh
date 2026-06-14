@@ -25,9 +25,9 @@ start_service "minimal" \
   "http://127.0.0.1:8080/ok"
 
 assert_ok_text "minimal /ok" "$(http_get "http://127.0.0.1:8080/ok")"
-assert_success "minimal ping" "$(http_get "http://127.0.0.1:8080/api/v1/test/ping")"
-assert_success "minimal db" "$(http_get "http://127.0.0.1:8080/api/v1/test/db")"
-assert_success "minimal redis" "$(http_get "http://127.0.0.1:8080/api/v1/test/redis")"
+assert_success "minimal ping" "$(http_get "http://127.0.0.1:8080/api/example/v1/test/ping")"
+assert_success "minimal db" "$(http_get "http://127.0.0.1:8080/api/example/v1/test/db")"
+assert_success "minimal redis" "$(http_get "http://127.0.0.1:8080/api/example/v1/test/redis")"
 
 if [[ -f "${PID_DIR}/minimal.pid" ]]; then
   minimal_pid="$(cat "${PID_DIR}/minimal.pid")"
@@ -45,8 +45,8 @@ start_service "producer" \
   "./app/app-dev.conf" \
   "http://127.0.0.1:8081/ok"
 
-assert_success "producer /" "$(http_get "http://127.0.0.1:8081/")"
-direct_body="$(http_get "http://127.0.0.1:8081/api/v1/test/direct?message=hello")"
+assert_success "producer /" "$(http_get "http://127.0.0.1:8081/api/producer/")"
+direct_body="$(http_get "http://127.0.0.1:8081/api/producer/v1/test/direct?message=hello")"
 assert_success "producer direct" "${direct_body}"
 assert_contains "producer echo" "${direct_body}" "producer echo: hello"
 echo ""
@@ -61,18 +61,18 @@ start_service "consumer" \
   "./app/app-dev.conf" \
   "http://127.0.0.1:8082/ok"
 
-assert_success "consumer /" "$(http_get "http://127.0.0.1:8082/")"
+assert_success "consumer /" "$(http_get "http://127.0.0.1:8082/api/consumer/")"
 
-proxy_body="$(http_get "http://127.0.0.1:8082/api/v1/call/producer?message=via-consumer-proxy")"
+proxy_body="$(http_get "http://127.0.0.1:8082/api/consumer/v1/call/producer?message=via-consumer-proxy")"
 assert_success "consumer 代理调用 producer" "${proxy_body}"
 assert_contains "consumer 代理 producer 回显" "${proxy_body}" "producer echo: via-consumer-proxy"
 assert_contains "consumer 代理链路" "${proxy_body}" "producer (nacos)"
 
-ping_body="$(http_get "http://127.0.0.1:8082/api/v1/call/ping")"
+ping_body="$(http_get "http://127.0.0.1:8082/api/consumer/v1/call/ping")"
 assert_success "consumer ping" "${ping_body}"
 assert_contains "consumer nacos ping" "${ping_body}" "pong from example-producer"
 
-echo_body="$(http_get "http://127.0.0.1:8082/api/v1/call/echo?message=via-nacos")"
+echo_body="$(http_get "http://127.0.0.1:8082/api/consumer/v1/call/echo?message=via-nacos")"
 assert_success "consumer echo" "${echo_body}"
 assert_contains "consumer nacos echo" "${echo_body}" "producer echo: via-nacos"
 

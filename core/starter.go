@@ -105,6 +105,12 @@ func (s *Starter) RegisterDefaultMiddlewares() {
 	// 上下文管理中间件（必须在最前面，为其他中间件提供traceId）
 	s.Engine.Use(myContext.ContextMiddleware())
 
+	defaultLocale := "zh-CN"
+	if s.App.Config != nil && s.App.Config.Locale.DefaultLocale != "" {
+		defaultLocale = s.App.Config.Locale.DefaultLocale
+	}
+	s.Engine.Use(myContext.LocaleMiddleware(defaultLocale))
+
 	// 异常处理中间件
 	s.Engine.Use(middleware.ExceptionHandler())
 
@@ -185,4 +191,9 @@ func (s *Starter) needRedis() bool {
 // GetEngine 获取Gin引擎
 func (s *Starter) GetEngine() *gin.Engine {
 	return s.Engine
+}
+
+// GetAPIGroup 获取带 /api/{appCode} 前缀的路由组，业务路由应注册在此组下
+func (s *Starter) GetAPIGroup() *gin.RouterGroup {
+	return s.Engine.Group(config.APIPrefix())
 }

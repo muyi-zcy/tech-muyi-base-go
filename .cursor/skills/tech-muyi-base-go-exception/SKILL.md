@@ -19,6 +19,7 @@ description: tech-muyi-base-go myException 错误处理：MyException、Validati
 
 | 类型 | 用途 | 创建方式 |
 |------|------|----------|
+| `BizError` | 业务异常（推荐） | `NewBizError(code, args)`，message 由中间件按 locale 解析 |
 | `MyException` | 通用业务异常 | `NewException(code, msg)` / `NewExceptionFromError(enum)` |
 | `ValidationError` | 参数校验失败 | `NewValidationError(field, message)` |
 | `NotFoundError` | 资源不存在 | `NewNotFoundError(resource, id)` |
@@ -30,7 +31,12 @@ description: tech-muyi-base-go myException 错误处理：MyException、Validati
 ```go
 import "github.com/muyi-zcy/tech-muyi-base-go/myException"
 
-// 自定义 code + message
+// 推荐：只抛 code + args
+err := myException.NewBizError("user.username.exists", map[string]string{
+    "username": "admin",
+})
+
+// 自定义 code + message（兼容旧写法）
 err := myException.NewException("10001", "用户不存在")
 
 // 从错误码枚举创建

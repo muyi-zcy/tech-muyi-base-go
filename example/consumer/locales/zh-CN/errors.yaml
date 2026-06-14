@@ -1,0 +1,3 @@
+consumer.rpc.discovery_failed: "发现/连接 {{peer}} 失败：{{reason}}"
+consumer.rpc.call_failed: "调用 {{method}} 失败：{{reason}}"
+consumer.demo.error: "{{field}} 校验失败（consumer 演示）"

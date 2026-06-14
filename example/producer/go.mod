@@ -6,6 +6,7 @@ require (
 	github.com/gin-gonic/gin v1.10.1
 	github.com/muyi-zcy/tech-muyi-base-go v0.0.0
 	github.com/muyi-zcy/tech-muyi-base-go/example/callloop v0.0.0-00010101000000-000000000000
+	github.com/muyi-zcy/tech-muyi-base-go/example/demo v0.0.0-00010101000000-000000000000
 	github.com/muyi-zcy/tech-muyi-base-go/example/proto v0.0.0
 	go.uber.org/zap v1.27.0
 	google.golang.org/grpc v1.64.0
@@ -90,5 +91,6 @@ require (
 replace (
 	github.com/muyi-zcy/tech-muyi-base-go => ../..
 	github.com/muyi-zcy/tech-muyi-base-go/example/callloop => ../callloop
+	github.com/muyi-zcy/tech-muyi-base-go/example/demo => ../demo
 	github.com/muyi-zcy/tech-muyi-base-go/example/proto => ../proto
 )
