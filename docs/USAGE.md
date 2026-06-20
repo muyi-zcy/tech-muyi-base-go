@@ -602,7 +602,7 @@ func (s *UserService) GetById(ctx context.Context, id int64) (*model.UserDO, err
     user := &model.UserDO{}
     if err := s.repo.GetById(ctx, user, id); err != nil {
         if errors.Is(err, gorm.ErrRecordNotFound) {
-            return nil, myException.NewExceptionFromError(myException.NOT_FOUND)
+            return nil, myException.NewBizError("user.user.not_found", nil)
         }
         return nil, perrors.Wrap(err, "查询用户失败")
     }
@@ -692,43 +692,36 @@ func (u *UserController) ListUsers(c *gin.Context) {
 
 | 类型 | 创建 | 中间件映射 |
 |------|------|------------|
-| MyException | `NewException(code, msg)` / `NewExceptionFromError(enum)` | FailWithCode |
-| ValidationError | `NewValidationError(field, msg)` | BadRequest |
-| NotFoundError | `NewNotFoundError(resource, id)` | NotFound |
+| BizError | `NewBizError(code, args)` | 按 locale 解析 message |
+| MyException | `NewException(code, msg)` | FailWithCode（兼容旧写法） |
+| ValidationError | `NewValidationError(field, msg)` | platform.validation.required |
+| NotFoundError | `NewNotFoundError(resource, id)` | platform.resource.not_found |
 
-### 14.2 常用错误码
+### 14.2 平台公共错误码
 
-| 枚举 | Code | 说明 |
-|------|------|------|
-| OK | 200 | 成功 |
-| BAD_REQUEST | 400 | 请求错误 |
-| UNAUTHORIZED | 401 | 未授权 |
-| NOT_FOUND | 404 | 资源不存在 |
-| INTERNAL_SERVER_ERROR | 500 | 服务器错误 |
-| INVALID_PARAM | 10000 | 参数无效 |
-| DB_EXCEPTION | 10001 | 数据库异常 |
+框架内置 `platform.*` 错误码，定义见 `myLocale/platform/contracts/errors.yaml`：
 
-完整枚举见 `myException/common_error_code.go`。
+| Code | 说明 |
+|------|------|
+| platform.validation.required | 参数校验失败 |
+| platform.resource.not_found | 资源不存在 |
+| platform.route.not_found | 路由不存在 |
+| platform.method.not_allowed | 方法不允许 |
+| platform.unauthorized | 未授权 |
+| platform.forbidden | 禁止访问 |
+| platform.internal_error | 系统内部错误 |
 
-### 14.3 注册自定义错误码
+业务错误码在各服务 `contracts/errors.yaml` 中定义，格式为 `{appCode}.{module}.{semantic}`。
 
-```go
-const MY_ERROR myException.CommonErrorCodeEnum = 100
-
-func init() {
-    myException.RegisterErrorCode(MY_ERROR, "20001", "自定义业务错误")
-}
-```
-
-### 14.4 错误处理分层
+### 14.3 错误处理分层
 
 ```
 Repository  → pkg/errors.Wrap 保留堆栈
-Service     → 映射 gorm.ErrRecordNotFound → NOT_FOUND；其他 Wrap
+Service     → 映射 gorm.ErrRecordNotFound → BizError；其他 Wrap
 Controller  → myResult.ErrorWithError(c, err)
 ```
 
-### 14.5 错误码格式（v2）
+### 14.4 错误码格式（v2）
 
 错误码格式为 `{appCode}.{module}.{semantic}`，第一段必须是 appCode：
 

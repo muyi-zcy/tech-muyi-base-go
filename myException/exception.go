@@ -22,14 +22,6 @@ func NewException(code string, message string) *MyException {
 	}
 }
 
-// NewExceptionFromError 从错误码创建业务异常
-func NewExceptionFromError(errorCode CommonErrorCodeEnum) *MyException {
-	return &MyException{
-		Code:    errorCode.GetResultCode(),
-		Message: errorCode.GetResultMsg(),
-	}
-}
-
 // ValidationError 验证异常
 type ValidationError struct {
 	Field   string
@@ -78,7 +70,7 @@ func GetErrorCode(err error) string {
 	case *NotFoundError:
 		return "platform.resource.not_found"
 	default:
-		return INTERNAL_SERVER_ERROR.GetResultCode()
+		return "platform.internal_error"
 	}
 }
 

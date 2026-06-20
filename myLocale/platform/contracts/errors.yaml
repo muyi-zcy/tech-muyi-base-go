@@ -10,5 +10,13 @@ codes:
     httpHint: 404
   - code: platform.method.not_allowed
     httpHint: 405
+  - code: platform.unauthorized
+    httpHint: 401
+  - code: platform.forbidden
+    httpHint: 403
+  - code: platform.conflict
+    httpHint: 409
+  - code: platform.rate_limited
+    httpHint: 429
   - code: platform.internal_error
     httpHint: 500

@@ -93,8 +93,30 @@ func FromGrpcStatus(err error) error {
 	if payload, ok := myException.DecodeRpcError(st.Message()); ok {
 		return myException.NewBizError(payload.BizCode, payload.Args)
 	}
-	code := bizCodeFromGrpcCode(st.Code())
-	return myException.GetErrorCodeByCode(code, st.Message())
+	return platformCodeFromGrpcCode(st.Code(), st.Message())
+}
+
+func platformCodeFromGrpcCode(code codes.Code, message string) error {
+	args := map[string]string{}
+	if message != "" {
+		args["message"] = message
+	}
+	switch code {
+	case codes.InvalidArgument:
+		return myException.NewBizError("platform.validation.required", args)
+	case codes.Unauthenticated:
+		return myException.NewBizError("platform.unauthorized", args)
+	case codes.PermissionDenied:
+		return myException.NewBizError("platform.forbidden", args)
+	case codes.NotFound:
+		return myException.NewBizError("platform.resource.not_found", args)
+	case codes.AlreadyExists:
+		return myException.NewBizError("platform.conflict", args)
+	case codes.ResourceExhausted:
+		return myException.NewBizError("platform.rate_limited", args)
+	default:
+		return myException.NewBizError("platform.internal_error", args)
+	}
 }
 
 func codeFromBizCode(bizCode string) codes.Code {
@@ -102,18 +124,20 @@ func codeFromBizCode(bizCode string) codes.Code {
 		return grpcCodeFromHTTP(hint)
 	}
 	switch bizCode {
-	case "400", "10000", "10006":
+	case "platform.validation.required":
 		return codes.InvalidArgument
-	case "401":
+	case "platform.unauthorized":
 		return codes.Unauthenticated
-	case "403":
+	case "platform.forbidden":
 		return codes.PermissionDenied
-	case "404":
+	case "platform.resource.not_found", "platform.route.not_found":
 		return codes.NotFound
-	case "409":
+	case "platform.conflict":
 		return codes.AlreadyExists
-	case "429", "10003":
+	case "platform.rate_limited":
 		return codes.ResourceExhausted
+	case "platform.internal_error":
+		return codes.Internal
 	default:
 		if len(bizCode) >= 1 && bizCode[0] == '4' {
 			return codes.InvalidArgument
@@ -143,25 +167,6 @@ func grpcCodeFromHTTP(httpCode int) codes.Code {
 			return codes.InvalidArgument
 		}
 		return codes.Internal
-	}
-}
-
-func bizCodeFromGrpcCode(code codes.Code) string {
-	switch code {
-	case codes.InvalidArgument:
-		return "400"
-	case codes.Unauthenticated:
-		return "401"
-	case codes.PermissionDenied:
-		return "403"
-	case codes.NotFound:
-		return "404"
-	case codes.AlreadyExists:
-		return "409"
-	case codes.ResourceExhausted:
-		return "429"
-	default:
-		return "500"
 	}
 }
 

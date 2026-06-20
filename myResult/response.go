@@ -1,10 +1,18 @@
 package myResult
 
 import (
-	"github.com/muyi-zcy/tech-muyi-base-go/myException"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/muyi-zcy/tech-muyi-base-go/myException"
+)
+
+const (
+	successCode        = "200"
+	internalErrorCode  = "platform.internal_error"
+	validationRequired = "platform.validation.required"
+	unauthorizedCode   = "platform.unauthorized"
+	notFoundCode       = "platform.resource.not_found"
 )
 
 var MAX_PAGE_SIZE = 2000
@@ -53,7 +61,7 @@ type MyResult struct {
 // Ok 成功返回
 func (r *MyResult) Ok(data interface{}) MyResult {
 	return MyResult{
-		Code:    myException.OK.GetResultCode(),
+		Code:    successCode,
 		Success: true,
 		Message: "success",
 		Data:    data,
@@ -64,7 +72,7 @@ func (r *MyResult) Ok(data interface{}) MyResult {
 // OkWithQuery 成功返回带查询参数
 func (r *MyResult) OkWithQuery(data interface{}, query *MyQuery) MyResult {
 	return MyResult{
-		Code:    myException.OK.GetResultCode(),
+		Code:    successCode,
 		Success: true,
 		Message: "success",
 		Data:    data,
@@ -75,7 +83,7 @@ func (r *MyResult) OkWithQuery(data interface{}, query *MyQuery) MyResult {
 // Fail 失败返回
 func (r *MyResult) Fail(message string) MyResult {
 	return MyResult{
-		Code:    myException.INTERNAL_SERVER_ERROR.GetResultCode(),
+		Code:    internalErrorCode,
 		Success: false,
 		Message: message,
 		Data:    nil,
@@ -108,7 +116,7 @@ func (r *MyResult) FailWithError(err error) MyResult {
 // BadRequest 400错误
 func (r *MyResult) BadRequest(message string) MyResult {
 	return MyResult{
-		Code:    myException.BAD_REQUEST.GetResultCode(),
+		Code:    validationRequired,
 		Success: false,
 		Message: message,
 		Data:    nil,
@@ -119,7 +127,7 @@ func (r *MyResult) BadRequest(message string) MyResult {
 // Unauthorized 401错误
 func (r *MyResult) Unauthorized(message string) MyResult {
 	return MyResult{
-		Code:    myException.UNAUTHORIZED.GetResultCode(),
+		Code:    unauthorizedCode,
 		Success: false,
 		Message: message,
 		Data:    nil,
@@ -130,7 +138,7 @@ func (r *MyResult) Unauthorized(message string) MyResult {
 // NotFound 404错误
 func (r *MyResult) NotFound(message string) MyResult {
 	return MyResult{
-		Code:    myException.NOT_FOUND.GetResultCode(),
+		Code:    notFoundCode,
 		Success: false,
 		Message: message,
 		Data:    nil,
@@ -144,7 +152,7 @@ var Result = &MyResult{}
 // Ok 静态成功返回
 func Ok(data interface{}) MyResult {
 	return MyResult{
-		Code:    myException.OK.GetResultCode(),
+		Code:    successCode,
 		Success: true,
 		Message: "success",
 		Data:    data,
@@ -155,7 +163,7 @@ func Ok(data interface{}) MyResult {
 // OkWithMessage 静态成功返回带自定义消息
 func OkWithMessage(message string, data interface{}) MyResult {
 	return MyResult{
-		Code:    myException.OK.GetResultCode(),
+		Code:    successCode,
 		Success: true,
 		Message: message,
 		Data:    data,
@@ -166,7 +174,7 @@ func OkWithMessage(message string, data interface{}) MyResult {
 // OkWithQuery 静态成功返回带查询参数
 func OkWithQuery(data interface{}, query *MyQuery) MyResult {
 	return MyResult{
-		Code:    myException.OK.GetResultCode(),
+		Code:    successCode,
 		Success: true,
 		Message: "success",
 		Data:    data,
@@ -177,7 +185,7 @@ func OkWithQuery(data interface{}, query *MyQuery) MyResult {
 // Fail 静态失败返回
 func Fail(message string) MyResult {
 	return MyResult{
-		Code:    myException.INTERNAL_SERVER_ERROR.GetResultCode(),
+		Code:    internalErrorCode,
 		Success: false,
 		Message: message,
 		Data:    nil,
@@ -210,7 +218,7 @@ func FailWithError(err error) MyResult {
 // BadRequest 静态400错误
 func BadRequest(message string) MyResult {
 	return MyResult{
-		Code:    myException.BAD_REQUEST.GetResultCode(),
+		Code:    validationRequired,
 		Success: false,
 		Message: message,
 		Data:    nil,
@@ -221,7 +229,7 @@ func BadRequest(message string) MyResult {
 // Unauthorized 静态401错误
 func Unauthorized(message string) MyResult {
 	return MyResult{
-		Code:    myException.UNAUTHORIZED.GetResultCode(),
+		Code:    unauthorizedCode,
 		Success: false,
 		Message: message,
 		Data:    nil,
@@ -232,7 +240,7 @@ func Unauthorized(message string) MyResult {
 // NotFound 静态404错误
 func NotFound(message string) MyResult {
 	return MyResult{
-		Code:    myException.NOT_FOUND.GetResultCode(),
+		Code:    notFoundCode,
 		Success: false,
 		Message: message,
 		Data:    nil,

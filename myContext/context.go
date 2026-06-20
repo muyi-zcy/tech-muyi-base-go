@@ -122,12 +122,12 @@ func ssoIdFromContext(ctx context.Context) string {
 // GetTraceIdFromContext 从context中获取traceId的便捷方法
 func GetTraceId(ctx context.Context) (string, error) {
 	if ctx == nil {
-		return "", myException.NewExceptionFromError(myException.UNAUTHORIZED)
+		return "", myException.NewBizError("platform.unauthorized", nil)
 	}
 
 	result := traceIdFromContext(ctx)
 	if result == "" {
-		return "", myException.NewExceptionFromError(myException.UNAUTHORIZED)
+		return "", myException.NewBizError("platform.unauthorized", nil)
 	}
 
 	return result, nil
@@ -137,12 +137,12 @@ func GetTraceId(ctx context.Context) (string, error) {
 func GetSsoId(ctx context.Context) (string, error) {
 	// 非空判断
 	if ctx == nil {
-		return "", myException.NewExceptionFromError(myException.UNAUTHORIZED)
+		return "", myException.NewBizError("platform.unauthorized", nil)
 	}
 
 	result := ssoIdFromContext(ctx)
 	if result == "" {
-		return "", myException.NewExceptionFromError(myException.UNAUTHORIZED)
+		return "", myException.NewBizError("platform.unauthorized", nil)
 	}
 
 	return result, nil

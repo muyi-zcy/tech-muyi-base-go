@@ -238,7 +238,7 @@ func NewUserService() *UserService {
 func (s *UserService) GetById(ctx context.Context, id int64) (*model.UserDO, error) {
 	user := &model.UserDO{}
 	if err := s.repo.GetById(ctx, user, id); err != nil {
-		return nil, myException.NewExceptionFromError(myException.NOT_FOUND)
+		return nil, myException.NewBizError("user.user.not_found", nil)
 	}
 	return user, nil
 }

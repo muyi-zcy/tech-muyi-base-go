@@ -59,7 +59,7 @@ myResult.JSON(c, result)
 ### 通过 c.Error(err) 由中间件处理
 
 ```go
-c.Error(myException.NewExceptionFromError(myException.NOT_FOUND))
+c.Error(myException.NewBizError("user.user.not_found", nil))
 return
 ```
 

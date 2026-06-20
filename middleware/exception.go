@@ -3,7 +3,6 @@ package middleware
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/muyi-zcy/tech-muyi-base-go/myException"
-	"github.com/muyi-zcy/tech-muyi-base-go/myLocale"
 	"github.com/muyi-zcy/tech-muyi-base-go/myLogger"
 	"github.com/muyi-zcy/tech-muyi-base-go/myResult"
 	"go.uber.org/zap"
@@ -18,12 +17,7 @@ func NotFoundHandler() gin.HandlerFunc {
 			zap.String("ip", c.ClientIP()),
 		)
 
-		var err error
-		if myLocale.Initialized() {
-			err = myException.NewBizError("platform.route.not_found", nil)
-		} else {
-			err = myException.NewException(myException.NOT_FOUND.GetResultCode(), "请求的资源不存在")
-		}
+		err := myException.NewBizError("platform.route.not_found", nil)
 		c.JSON(200, buildErrorResult(c, err))
 		c.Abort()
 	}
@@ -38,15 +32,7 @@ func MethodNotAllowedHandler() gin.HandlerFunc {
 			zap.String("ip", c.ClientIP()),
 		)
 
-		var err error
-		if myLocale.Initialized() {
-			err = myException.NewBizError("platform.method.not_allowed", nil)
-		} else {
-			err = myException.NewException(
-				myException.METHOD_NOT_ALLOWED.GetResultCode(),
-				"请求的方法不允许",
-			)
-		}
+		err := myException.NewBizError("platform.method.not_allowed", nil)
 		c.JSON(200, buildErrorResult(c, err))
 		c.Abort()
 	}
