@@ -20,14 +20,16 @@ import (
 )
 
 type grpcManager struct {
-	cfg        config.RpcConfig
-	grpcPort   int
-	server     *grpc.Server
-	client     *ClientManager
-	registrars []ServiceRegistrar
-	healthSrv  *health.Server
-	listener   net.Listener
-	startOnce  sync.Once
+	cfg         config.RpcConfig
+	grpcPort    int
+	maxRecvSize int
+	server      *grpc.Server
+	client      *ClientManager
+	registrars  []ServiceRegistrar
+	healthSrv   *health.Server
+	listener    net.Listener
+	buildOnce   sync.Once
+	startOnce   sync.Once
 }
 
 var resolversRegistered sync.Once
@@ -43,31 +45,11 @@ func newGrpcManager(appCfg *config.Config, registry nacos.Registry, rpcCfg confi
 		maxRecv = 4 << 20
 	}
 
-	opts := []grpc.ServerOption{
-		grpc.ChainUnaryInterceptor(
-			interceptor.Recovery(),
-			interceptor.ContextExtract(),
-			interceptor.Logging(),
-			interceptor.ErrorMapping(),
-		),
-		grpc.MaxRecvMsgSize(maxRecv),
-	}
-
-	srv := grpc.NewServer(opts...)
-	healthSrv := health.NewServer()
-	healthpb.RegisterHealthServer(srv, healthSrv)
-	healthSrv.SetServingStatus("", healthpb.HealthCheckResponse_SERVING)
-
-	if rpcCfg.Server.EnableReflection {
-		reflection.Register(srv)
-	}
-
 	mgr := &grpcManager{
-		cfg:       rpcCfg,
-		grpcPort:  rpcCfg.Server.Port,
-		server:    srv,
-		client:    newClientManager(appCfg, rpcCfg),
-		healthSrv: healthSrv,
+		cfg:         rpcCfg,
+		grpcPort:    rpcCfg.Server.Port,
+		maxRecvSize: maxRecv,
+		client:      newClientManager(appCfg, rpcCfg),
 	}
 
 	myLogger.Info("RPC 插件已启用",
@@ -75,6 +57,37 @@ func newGrpcManager(appCfg *config.Config, registry nacos.Registry, rpcCfg confi
 		zap.String("registry", rpcCfg.Registry),
 	)
 	return mgr
+}
+
+func (m *grpcManager) buildServer() {
+	m.buildOnce.Do(func() {
+		chain := []grpc.UnaryServerInterceptor{
+			interceptor.Recovery(),
+			interceptor.ContextExtract(),
+		}
+		chain = appendExtraUnaryServerInterceptors(chain)
+		chain = append(chain,
+			interceptor.Logging(),
+			interceptor.ErrorMapping(),
+		)
+
+		opts := []grpc.ServerOption{
+			grpc.ChainUnaryInterceptor(chain...),
+			grpc.MaxRecvMsgSize(m.maxRecvSize),
+		}
+
+		srv := grpc.NewServer(opts...)
+		healthSrv := health.NewServer()
+		healthpb.RegisterHealthServer(srv, healthSrv)
+		healthSrv.SetServingStatus("", healthpb.HealthCheckResponse_SERVING)
+
+		if m.cfg.Server.EnableReflection {
+			reflection.Register(srv)
+		}
+
+		m.server = srv
+		m.healthSrv = healthSrv
+	})
 }
 
 func registerResolversOnce(registry nacos.Registry, rpcCfg config.RpcConfig) {
@@ -94,7 +107,10 @@ func registerResolversOnce(registry nacos.Registry, rpcCfg config.RpcConfig) {
 
 func (m *grpcManager) Enabled() bool { return true }
 
-func (m *grpcManager) Server() *grpc.Server { return m.server }
+func (m *grpcManager) Server() *grpc.Server {
+	m.buildServer()
+	return m.server
+}
 
 func (m *grpcManager) RegisterServices(registrars ...ServiceRegistrar) {
 	m.registrars = append(m.registrars, registrars...)
@@ -107,6 +123,7 @@ func (m *grpcManager) GrpcPort() int { return m.grpcPort }
 func (m *grpcManager) Start(_ context.Context, lis net.Listener) error {
 	var startErr error
 	m.startOnce.Do(func() {
+		m.buildServer()
 		for _, reg := range m.registrars {
 			reg(m.server)
 		}

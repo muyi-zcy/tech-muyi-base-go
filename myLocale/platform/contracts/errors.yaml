@@ -10,6 +10,12 @@ codes:
     httpHint: 404
   - code: platform.method.not_allowed
     httpHint: 405
+  - code: platform.auth.token_missing
+    httpHint: 401
+  - code: platform.auth.token_invalid
+    httpHint: 401
+  - code: platform.auth.permission_denied
+    httpHint: 403
   - code: platform.unauthorized
     httpHint: 401
   - code: platform.forbidden

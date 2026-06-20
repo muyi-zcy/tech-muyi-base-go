@@ -15,8 +15,8 @@ func addTraceIdToFields(ctx context.Context, fields ...zap.Field) []zap.Field {
 		fields = append(fields, zap.String(myContext.TraceId, traceId))
 	}
 
-	ssoId, ssoIdErr := myContext.GetSsoId(ctx)
-	if ssoIdErr == nil {
+	ssoId := myContext.TryGetSsoId(ctx)
+	if ssoId != "" {
 		fields = append(fields, zap.String(myContext.SsoId, ssoId))
 	}
 	return fields

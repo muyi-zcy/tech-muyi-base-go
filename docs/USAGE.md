@@ -43,7 +43,8 @@
 | 缓存 | `infrastructure` | Redis 客户端（go-redis v8） |
 | 统一返回 | `myResult` | HTTP 200 + body 内 success/code/message |
 | 异常体系 | `myException` | 业务异常、校验异常、404 等 |
-| 上下文 | `myContext` | traceId、ssoId、token 在 HTTP/gRPC 间透传 |
+| 上下文 | `myContext` | traceId、token 传播；ssoId 鉴权后写入 |
+| 鉴权 | `myAuth` | Token/Session/中间件/权限，见 [AUTH.md](./AUTH.md) |
 | 数据访问 | `myRepository` | BaseRepository CRUD + 软删除 + 分页 |
 | 实体基类 | `model` | BaseDO + DateTime 自定义类型 |
 | Nacos（可插拔） | `infrastructure/nacos` | 服务注册/发现，失败降级 noop |
@@ -386,7 +387,7 @@ client := pb.NewCatalogServiceClient(conn)
 
 | 顺序 | 中间件 | 包 | 作用 |
 |------|--------|-----|------|
-| 1 | ContextMiddleware | myContext | 注入 traceId、ssoId 到 Gin + Request.Context |
+| 1 | ContextMiddleware | myContext | 注入 traceId；可选预置 x-token（不读 x-sso-id） |
 | 2 | ExceptionHandler | middleware | panic 捕获、c.Errors 统一 JSON 返回 |
 | 3 | Logger | middleware | 请求/响应日志（含 traceId） |
 
@@ -444,7 +445,7 @@ MySQL DSN 格式：
 | 字段 | 值来源 |
 |------|--------|
 | Id | `myId.NextId()` 雪花 ID |
-| Creator / Operator | context 中 ssoId，失败则 `"system"` |
+| Creator / Operator | `myContext.ResolveActor(ctx)`，未鉴权为 `"system"` |
 | GmtCreate / GmtModified | `model.Now()`（精确到秒） |
 | RowVersion | 0 |
 | RowStatus | 0 |
@@ -797,35 +798,40 @@ supported_locales = ["zh-CN", "en-US"]
 
 ---
 
-## 16. 上下文透传 traceId / ssoId
+## 16. 上下文透传与鉴权
 
-### 16.1 HTTP
+完整鉴权架构、配置、HTTP/gRPC 接入见 **[AUTH.md](./AUTH.md)**。
 
-| 来源 | Header / Cookie |
-|------|-----------------|
-| traceId | x-trace-id |
-| ssoId | x-sso-id |
+### 16.1 HTTP 传播
 
-无则自动生成：traceId=UUID，ssoId=`-1`。
+| 字段 | 入站 | 说明 |
+|------|------|------|
+| traceId | x-trace-id（Header/Cookie） | 无则生成 UUID |
+| token | x-token（Header/Cookie） | Ingress 可预置；鉴权由 myAuth 校验 |
+| ssoId | **不入站** | 仅 myAuth 校验 token 后写入 context |
 
 ### 16.2 获取方式
 
 ```go
-// Controller
-traceId := myContext.GetTraceIdFromGinCtx(c)
-ssoId := myContext.GetSsoIdFromGinCtx(c)
-
 // Service / Repository（使用 c.Request.Context()）
 traceId, _ := myContext.GetTraceId(ctx)
-ssoId, _ := myContext.GetSsoId(ctx)
+ssoId, _ := myContext.RequireSsoId(ctx)   // 必须登录
+actor := myContext.ResolveActor(ctx)      // GORM 审计，未登录 → "system"
 
 // 不报错版本
 traceId := myContext.TryGetTraceId(ctx)
+ssoId := myContext.TryGetSsoId(ctx)       // 未鉴权为空
+
+// 用户身份 / Session
+sess, ok := myAuth.GetSession(c)
+sess, ok := myAuth.SessionFromContext(ctx)
 ```
 
 ### 16.3 gRPC
 
-客户端拦截器注入 metadata（x-trace-id、x-sso-id、x-source-service）；服务端 `ContextExtract` 拦截器还原到 context。
+- 入站：`ContextExtract` 恢复 traceId、token（**不读** x-sso-id）
+- 鉴权：可选 `myAuth.RegisterGRPCAuth()` 从 token 加载 Session
+- 出站：`ContextInject` 携带 traceId、token；ssoId 仅在已鉴权时带出
 
 ---
 

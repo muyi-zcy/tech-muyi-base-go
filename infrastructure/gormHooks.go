@@ -259,12 +259,7 @@ func (h *BaseDOHook) setCreatorIfEmpty(ctx context.Context, modelValue reflect.V
 	}
 
 	// 获取当前用户SSO ID
-	ssoId, err := myContext.GetSsoId(ctx)
-	if err != nil {
-		// 如果获取SSO ID失败，使用默认值
-		ssoId = "system"
-		myLogger.WarnCtx(ctx, "获取SSO ID失败，使用默认值", zap.Error(err))
-	}
+	ssoId := myContext.ResolveActor(ctx)
 
 	creatorField.Set(reflect.ValueOf(&ssoId))
 	myLogger.DebugCtx(ctx, "自动设置创建人", zap.String("creator", ssoId))
@@ -284,12 +279,7 @@ func (h *BaseDOHook) setOperatorIfEmpty(ctx context.Context, modelValue reflect.
 	}
 
 	// 获取当前用户SSO ID
-	ssoId, err := myContext.GetSsoId(ctx)
-	if err != nil {
-		// 如果获取SSO ID失败，使用默认值
-		ssoId = "system"
-		myLogger.WarnCtx(ctx, "获取SSO ID失败，使用默认值", zap.Error(err))
-	}
+	ssoId := myContext.ResolveActor(ctx)
 
 	operatorField.Set(reflect.ValueOf(&ssoId))
 	myLogger.DebugCtx(ctx, "自动设置操作人", zap.String("operator", ssoId))
@@ -383,12 +373,7 @@ func (h *BaseDOHook) setOperator(ctx context.Context, modelValue reflect.Value, 
 	}
 
 	// 获取当前用户SSO ID
-	ssoId, err := myContext.GetSsoId(ctx)
-	if err != nil {
-		// 如果获取SSO ID失败，使用默认值
-		ssoId = "system"
-		myLogger.WarnCtx(ctx, "获取SSO ID失败，使用默认值", zap.Error(err))
-	}
+	ssoId := myContext.ResolveActor(ctx)
 
 	// 同时设置结构体字段和GORM Statement
 	operatorField.Set(reflect.ValueOf(&ssoId))
@@ -538,12 +523,7 @@ func (h *BaseDOHook) shouldAddDefaultFields(updateMap map[string]interface{}) bo
 func (h *BaseDOHook) addDefaultFieldsToMap(ctx context.Context, updateMap map[string]interface{}) error {
 	// 添加操作人（如果不存在）
 	if _, exists := updateMap["operator"]; !exists {
-		ssoId, err := myContext.GetSsoId(ctx)
-		if err != nil {
-			ssoId = "system"
-			myLogger.WarnCtx(ctx, "获取SSO ID失败，使用默认值", zap.Error(err))
-		}
-		updateMap["operator"] = ssoId
+		updateMap["operator"] = myContext.ResolveActor(ctx)
 	}
 
 	// 添加更新时间（如果不存在）

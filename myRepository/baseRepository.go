@@ -166,9 +166,9 @@ func (r *baseRepository) DeleteById(ctx context.Context, entity interface{}, id 
 	if err != nil {
 		return err
 	}
-	operator, ssoIdErr := myContext.GetSsoId(ctx)
-	if ssoIdErr != nil {
-		return ssoIdErr
+	operator, err := myContext.RequireSsoId(ctx)
+	if err != nil {
+		return err
 	}
 
 	// 直接根据ID更新，不需要先查询
