@@ -19,9 +19,11 @@ type SessionManager interface {
 var globalManager SessionManager
 
 // Manager 返回全局 SessionManager。
-func Manager() SessionManager {
-	ensureInitialized()
-	return globalManager
+func Manager() (SessionManager, error) {
+	if err := ensureInitialized(); err != nil {
+		return nil, err
+	}
+	return globalManager, nil
 }
 
 type manager struct {

@@ -34,7 +34,11 @@ func TestGRPCAuthInterceptorLoadsSession(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	sess, token, err := Manager().Create(context.Background(), &SessionInput{
+	mgr, err := Manager()
+	if err != nil {
+		t.Fatal(err)
+	}
+	sess, token, err := mgr.Create(context.Background(), &SessionInput{
 		UserID:      99,
 		Username:    "grpc-user",
 		DisplayName: "GRPC User",

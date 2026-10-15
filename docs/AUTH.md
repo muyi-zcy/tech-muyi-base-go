@@ -422,7 +422,11 @@ secured.Use(myAuth.Required(authOpts...))
 **签发 Token（Service 层）：**
 
 ```go
-sess, token, err := myAuth.Manager().Create(ctx, &myAuth.SessionInput{
+mgr, err := myAuth.Manager()
+if err != nil {
+    return err
+}
+sess, token, err := mgr.Create(ctx, &myAuth.SessionInput{
     UserID:      user.Id,
     Username:    user.Username,
     DisplayName: user.DisplayName,
@@ -434,7 +438,11 @@ sess, token, err := myAuth.Manager().Create(ctx, &myAuth.SessionInput{
 **登出：**
 
 ```go
-_ = myAuth.Manager().Destroy(ctx, myAuth.Token(c))
+mgr, err := myAuth.Manager()
+if err != nil {
+    return err
+}
+_ = mgr.Destroy(ctx, myAuth.Token(c))
 ```
 
 **客户端携带 Token：**

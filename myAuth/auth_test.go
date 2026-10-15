@@ -74,7 +74,11 @@ func TestInitWithEncryptedJWT(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	sess, token, err := Manager().Create(context.Background(), &SessionInput{
+	mgr, err := Manager()
+	if err != nil {
+		t.Fatal(err)
+	}
+	sess, token, err := mgr.Create(context.Background(), &SessionInput{
 		UserID:      42,
 		Username:    "u",
 		DisplayName: "U",

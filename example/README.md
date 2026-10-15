@@ -10,7 +10,7 @@
 
 基础设施地址（dev 配置）：
 
-- MySQL: `192.168.0.181:3306`，用户 `root`，密码 `devMysqlpasswd`，库 `tech_muyi_example`
+- MySQL: `192.168.0.181:3306`，用户 `root`，密码 `devMysqlPasswd`，库 `tech_muyi_example`
 - Redis: `192.168.0.181:6379`，密码 `devRedisPasswd`
 - Nacos: `192.168.0.181:8848`，namespace `dev`，group `XI_PLATFORM`
 

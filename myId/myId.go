@@ -12,6 +12,8 @@ import (
 )
 
 var snowFlake = SnowFlake{}
+var initOnce sync.Once
+var initErr error
 
 type SnowFlake struct {
 	epoch     int64 // 起始时间戳
@@ -35,6 +37,11 @@ type SnowFlake struct {
 }
 
 func init() {
+	// 延迟初始化，避免 init 中 panic
+	initErr = initSnowFlake()
+}
+
+func initSnowFlake() error {
 	snowFlake.epoch = int64(1672502400000) //设置起始时间戳
 	snowFlake.centerIdBits = 5
 	snowFlake.workerIdBits = 5
@@ -46,17 +53,17 @@ func init() {
 
 	centerId := InitDataCenterID(int64(maxCenterId))
 	workerId := InitWorkerID(centerId, int64(maxWorkerId))
-	snowFlake.centerId = centerId
-	snowFlake.workerId = workerId
 
 	// 参数校验
 	if int(centerId) > maxCenterId || centerId < 0 {
-		panic(fmt.Sprintf("Center ID can't be greater than %d or less than 0", maxCenterId))
+		return errors.New(fmt.Sprintf("Center ID can't be greater than %d or less than 0", maxCenterId))
 	}
 	if int(workerId) > maxWorkerId || workerId < 0 {
-		panic(fmt.Sprintf("Worker ID can't be greater than %d or less than 0", maxWorkerId))
+		return errors.New(fmt.Sprintf("Worker ID can't be greater than %d or less than 0", maxWorkerId))
 	}
 
+	snowFlake.centerId = centerId
+	snowFlake.workerId = workerId
 	snowFlake.sequenceBits = 12 // 序列在ID中占的位数,最大为4095
 	snowFlake.sequence = -1
 
@@ -65,10 +72,17 @@ func init() {
 	snowFlake.workerIdShift = snowFlake.sequenceBits                                                    // 机器ID向左移12位
 	snowFlake.centerIdShift = snowFlake.sequenceBits + snowFlake.workerIdBits                           // 机房ID向左移18位
 	snowFlake.timestampShift = snowFlake.sequenceBits + snowFlake.workerIdBits + snowFlake.centerIdBits // 时间截向左移22位
+
+	return nil
 }
 
 // NextId 生成下一个ID
 func NextId() (int64, error) {
+	// 检查初始化错误
+	if initErr != nil {
+		return 0, errors.Wrap(initErr, "snowflake initialization failed")
+	}
+
 	snowFlake.lock.Lock() //设置锁，保证线程安全
 	defer snowFlake.lock.Unlock()
 

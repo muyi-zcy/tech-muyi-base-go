@@ -98,7 +98,7 @@ curl :8082/api/v1/call/producer
 | `MYSQL_HOST` | 192.168.0.181 | MySQL 地址 |
 | `MYSQL_PORT` | 3306 | MySQL 端口 |
 | `MYSQL_USER` | root | MySQL 用户 |
-| `MYSQL_PASS` | devMysqlpasswd | MySQL 密码 |
+| `MYSQL_PASS` | devMysqlPasswd | MySQL 密码 |
 | `MYSQL_DB` | tech_muyi_example | 数据库名 |
 | `AUTO_START` | true | `false` 时不自动启停服务（需手动启动） |
 | `GO_BIN` | 自动探测 | Go 可执行文件路径 |

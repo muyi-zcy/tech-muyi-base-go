@@ -91,7 +91,10 @@ func buildAuthMiddleware(base middlewareOptions, opts ...Option) gin.HandlerFunc
 		opt(&base)
 	}
 	return func(c *gin.Context) {
-		ensureInitialized()
+		if err := ensureInitialized(); err != nil {
+			abortWithError(c, err)
+			return
+		}
 		m := globalManager.(*manager)
 
 		path := NormalizePath(c.Request.URL.Path)

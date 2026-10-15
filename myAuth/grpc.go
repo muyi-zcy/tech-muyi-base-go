@@ -40,7 +40,9 @@ func GRPCAuthInterceptor(opts ...GRPCOption) grpc.UnaryServerInterceptor {
 			return handler(ctx, req)
 		}
 
-		ensureInitialized()
+		if err := ensureInitialized(); err != nil {
+			return nil, err
+		}
 		m := globalManager.(*manager)
 		sess, err := m.LoadFromToken(ctx, token, options.providerName)
 		if err != nil || sess == nil {

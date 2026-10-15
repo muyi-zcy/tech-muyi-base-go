@@ -155,11 +155,12 @@ func (c JWTConfig) decodeKey() ([]byte, error) {
 	return nil, fmt.Errorf("jwt key must be 32 bytes or base64-encoded 32 bytes")
 }
 
-func ensureInitialized() {
+func ensureInitialized() error {
 	cfgMu.RLock()
 	ok := initialized
 	cfgMu.RUnlock()
 	if !ok {
-		panic("myAuth: call myAuth.Init or myAuth.MustInitFromViper before use")
+		return fmt.Errorf("myAuth: call myAuth.Init or myAuth.MustInitFromViper before use")
 	}
+	return nil
 }
